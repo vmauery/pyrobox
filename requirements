@@ -1,0 +1,88 @@
+mac filter
+protocol filter
+port forward
+dmz?
+masquerade
+dnat
+remote management
+optional comment per rule
+optional logging per rule
+per host rules (protocol options)
+custom rules
+ping ok
+captive portal
+
+
+schema
+======
+match table
+-----------
+match id
+match predefined
+match type
+match criteria
+
+jump table
+----------
+jump id
+jump destination
+jump args
+
+rules table
+-----------
+rule id
+chain id
+comment
+jump id
+
+rules_match table
+-----------------
+rule id
+match id
+
+chain table
+-----------
+chain id
+chain name
+table name
+
+
+incoming
+-A INPUT -i lo -j ACCEPT 
+-A INPUT -p ipv6 -j ACCEPT 
+-A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT 
+-A INPUT -i $WAN_IF -j wan_incoming_ok # based on checkboxes
+-A INPUT -i $LAN_IF -j lan_mac_filter
+-A INPUT -i $LAN_IF -j lan_incoming_ok # based on checkboxes
+
+-A FORWARD -o ppp0 -p tcp -m tcp --tcp-flags SYN,RST SYN -m tcpmss --mss 1400:1536 -j TCPMSS --clamp-mss-to-pmtu 
+-A FORWARD -m state --state RELATED,ESTABLISHED -j ACCEPT 
+-A FORWARD -j per_host_rules
+-A FORWARD -i $WAN_IF -o $LAN_IF -j forward_in
+-A FORWARD -i $LAN_IF -o $WAN_IF -j forward_out
+
+-A OUTPUT -o lo -j ACCEPT 
+-A OUTPUT -p ipv6 -j ACCEPT 
+-A OUTPUT -m state --state RELATED,ESTABLISHED -j ACCEPT 
+-A OUTPUT -d 10.0.0.0/255.255.255.0 -j ACCEPT 
+-A OUTPUT -j outgoing_ok 
+
+
+captive portal
+give out a dhcp address on 'restricted subnet' to anyone
+block all network activity except for dhcp and http(s)
+redirect all http(s) requests to active portal daemon to provide key
+once key is provided, add to okayed chain
+make sure we expire old leases
+
+
+
+# start with two empty databases, pyrobox.db, pyrobox.saved.db
+# on apply, copy pyrobox.db to pyrobox.saved.db (restart appropriate services)
+# on commit, copy all settings files (including dbs) to flash
+
+# on a reset button push, copy factory_defaults.db over both
+#    pyrobox.saved.db and pyrobox.db, default settings files
+#    over /etc settings files and reboot
+# 
+

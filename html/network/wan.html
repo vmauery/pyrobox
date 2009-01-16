@@ -1,0 +1,107 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"><head>
+<title>PyroBox - WAN</title>
+<style type="text/css" media="all">@import "/theme/flames/style.css";</style>
+
+
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/jquery.combobox.js"></script>
+<script type="text/javascript" src="/js/pyrobox.js"></script>
+
+<script type="text/javascript"><!--//
+(function($) {$(function() {
+// on load stuff goes here
+
+// set up show/hide for address methods based on address_method.changed
+function address_method_change() {
+	$("#id_wan_address_method").change(function() {
+		var val = $(this).val();
+		$.post("/network/wan", {subform:1, wan_address_method:val}, function(data, textStatus) {
+			$("#network-wan-form").replaceWith(data);
+			address_method_change();
+		});
+	});
+}
+address_method_change();
+
+}); })(jQuery);
+//--!>
+</script>
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="shortcut icon" href="/theme/flames/images/favicon.ico" type="image/x-icon" />
+</head>
+<body class="sidebar-left">
+<div id="header-region" class="clear-block"></div>
+<div id="wrapper">
+	<div id="container" class="clear-block">
+		<div id="header">
+			<div id="logo-floater"><h1><a href="/"><img src="/theme/flames/images/logo.png" alt="" title=""  /><span>.-~::PyroBox::~-.</span></a></h1></div>
+			
+			<ul class="links primary-links">
+				<li><a href="/settings" class="">Settings</a></li>
+				<li><a href="/firewall" class="">Firewall</a></li>
+				<li><a href="/" class="">Information</a></li>
+				<li><a href="/network" class="active">Network</a></li>
+				
+			</ul>
+			
+			
+			<ul class="links secondary-links">
+				<li><a href="/network/wireless" class="">Wireless</a></li>
+				<li><a href="/network/wan" class="active">WAN</a></li>
+				<li><a href="/network/lan" class="">LAN</a></li>
+				
+			</ul>
+			
+		</div><!-- /header -->
+		<div id="sidebar-left" class="sidebar">
+		
+			<div class="block clear-block block-status-change">
+			
+
+<div class="content">
+<h2>Change Status</h2>
+
+<div id="jstatus"></div>
+
+</div>
+
+
+			</div>
+		
+		</div>
+		<div id="center"><div id="squeeze"><div class="right-corner"><div class="left-corner">
+<div class="breadcrumb"><a href="/">Home</a> &raquo; <a href="/network">Network</a> &raquo; <a href="/network/wan">WAN</a></div>
+		<div id="blocks-pre"></div>
+
+
+
+
+<!--
+	Here we need to render a two-level ul tree
+	that represents the tabs for this section
+-->
+
+
+<div id="content">
+
+
+
+<h1>WAN</h1>
+<form method="post" id="network-wan-form">
+</form>
+
+
+
+</div>
+
+		<div id="blocks-post">
+		</div>
+		<!-- /center --></div><!-- /squeeze --></div></div></div>
+		<div id="sidebar-right" class="sidebar"></div>
+	<!-- /container --></div>
+<!-- /wrapper --></div>
+
+</html>

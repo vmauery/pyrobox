@@ -1,0 +1,199 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"><head>
+<title>PyroBox - DHCP</title>
+<style type="text/css" media="all">@import "/theme/flames/style.css";</style>
+
+<style type="text/css" media="all">
+table.static-dhcp, table.dynamic-dhcp {
+	width: 700px;
+}
+table.deny-dhcp {
+	width: 500px;
+}
+</style>
+
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/jquery.combobox.js"></script>
+<script type="text/javascript" src="/js/jquery.tablesorter.js"></script>
+<script type="text/javascript" src="/js/pyrobox.js"></script>
+
+<script type="text/javascript">
+(function($) {$(function() {
+function promote_row(obj) {
+	var $row = $(obj).parent().parent();
+	var row = '';
+	id = $(obj).attr("id").replace(/promote_([0-9a-f]{2}(-[0-9a-f]{2}){5})_.*/, '$1');
+	var hostname = $('#row_'+id+'-hostname').html();
+	var mac_addr = $('#row_'+id+'-mac_addr').html();
+	var ip_addr = $('#row_'+id+'-ip_addr').html();
+	ip_addr = ip_addr.substring(0, ip_addr.lastIndexOf('.')+1);
+	var mac_field = $('#id_mac_addr');
+	var ip_field = $('#id_ip_addr');
+	var host_field = $('#id_hostname');
+	mac_field.val(mac_addr);
+	host_field.val(hostname);
+	ip_field.val(ip_addr);
+	document.location.hash = 'dhcp_header';
+	ip_field.focus();
+}
+function deny_row(obj) {
+	var $row = $(obj).parent().parent();
+	var row = '';
+	id = $(obj).attr("id").replace(/deny_([0-9a-f]{2}(-[0-9a-f]{2}){5})_.*/, '$1');
+	hostname = $('#row_'+id+'-hostname').html();
+	mac_addr = $('#row_'+id+'-mac_addr').html();
+	$.post(url, {deny:id, hostname:hostname, mac_addr:mac_addr}, function(data, textStatus) {
+		if (textStatus == "success") {
+			$row.remove();
+			// add to the deny table
+		}
+	});
+}
+function js_links_local() {
+	/* set the on click for promote links */
+	$(".jslink").filter(".promote").unbind('click').click(function() {
+		promote_row(this);
+	});
+	/* set the on click for deny links */
+	$(".jslink").filter(".deny").unbind('click').click(function() {
+		deny_row(this);
+	});
+	/* set the on click for delete links */
+	$(".jslink").filter(".delete").unbind('click').click(function() {
+		fetch_static_leases();
+	});
+}
+var static_leases = [];
+function draw_static_lease(lease) {
+	return "<tr id='row_"+lease.id+"' class='edit'>\n<td id='row_"+lease.id+"-mac_addr'>"+lease.mac_addr+"</td><td id='row_"+lease.id+"-ip_addr'>"+lease.ip_addr+"</td><td id='row_"+lease.id+"-hostname'>"+lease.hostname+"</td>\n<td><a id='edit_"+lease.id+"_static' class='jslink delete'>delete</a> <a id='delete_"+lease.id+"_static'  class='jslink edit'>edit</a></td></tr>";
+}
+function redraw_static_leases() {
+	table = "";
+	$.each(static_leases, function(i, item) {
+		table += draw_static_lease(item);
+	});
+	$("#static-dhcp-form > tbody").html(table);
+	js_links_local();
+}
+function fetch_static_leases() {
+	url = "/config/?json";
+	$.postJSON(url, {q:"static leases"}, function(data) {
+		//alert(data);
+		static_leases = data;
+		redraw_static_leases();
+		$(".tablesorter").trigger("update");
+	});
+}
+
+fetch_static_leases();
+
+$(".tablesorter").tablesorter();
+
+}); })(jQuery);
+</script>
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="shortcut icon" href="/theme/flames/images/favicon.ico" type="image/x-icon" />
+</head>
+<body class="sidebar-left">
+<div id="header-region" class="clear-block"></div>
+<div id="wrapper">
+	<div id="container" class="clear-block">
+		<div id="header">
+			<div id="logo-floater"><h1><a href="/"><img src="/theme/flames/images/logo.png" alt="" title=""  /><span>.-~::PyroBox::~-.</span></a></h1></div>
+			
+			<ul class="links primary-links">
+				<li><a href="/settings" class="active">Settings</a></li>
+				<li><a href="/firewall" class="">Firewall</a></li>
+				<li><a href="/" class="">Information</a></li>
+				<li><a href="/network" class="">Network</a></li>
+				
+			</ul>
+			
+			
+			<ul class="links secondary-links">
+				<li><a href="/settings/dhcp" class="active">DHCP</a></li>
+				<li><a href="/settings/dns" class="">DNS</a></li>
+				<li><a href="/settings/captive" class="">Captive Portal</a></li>
+				
+			</ul>
+			
+		</div><!-- /header -->
+		<div id="sidebar-left" class="sidebar">
+		
+			<div class="block clear-block block-status-change">
+			
+
+<div class="content">
+<h2>Change Status</h2>
+
+<div id="jstatus"></div>
+<div id="jbody"></div>
+
+</div>
+
+
+			</div>
+		
+		</div>
+		<div id="center"><div id="squeeze"><div class="right-corner"><div class="left-corner">
+<div class="breadcrumb"><a href="/">Home</a> &raquo; <a href="/settings">Settings</a> &raquo; <a href="/settings/dhcp">DHCP</a></div>
+		<div id="blocks-pre"></div>
+
+
+
+
+<!--
+	Here we need to render a two-level ul tree
+	that represents the tabs for this section
+-->
+
+
+<div id="content">
+
+
+
+<h1>DHCP</h1>
+<table class="tablesorter" id="dhcp-settings-form">
+<thead>
+</thead>
+<tbody>
+</tbody>
+</table>
+
+<a name='dhcp_header'><h2>Static DHCP Entries</h2></a>
+<table class="tablesorter" id="static-dhcp-form">
+<thead><tr><th>Mac Address</th><th>IP Address</th><th>Hostname</th><th>Actions</th></tr></thead>
+<tbody>
+</tbody>
+</table>
+
+<h2>Existing Dynamic DHCP Leases</h2>
+<table class="tablesorter" id="dynamic-dhcp-leases">
+<thead>
+</thead>
+<tbody>
+</tbody>
+</table>
+
+<h2>Deny DHCP Leases</h2>
+<table class="tablesorter" id="deny-dhcp-form">
+<thead>
+</thead>
+<tbody>
+</tbody>
+</table>
+
+
+
+</div>
+
+		<div id="blocks-post">
+		</div>
+		<!-- /center --></div><!-- /squeeze --></div></div></div>
+		<div id="sidebar-right" class="sidebar"></div>
+	<!-- /container --></div>
+<!-- /wrapper --></div>
+
+</html>
