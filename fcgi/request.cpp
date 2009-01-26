@@ -21,7 +21,6 @@
 
 #include <request.hpp>
 #include <http.hpp>
-#include "utf8_codecvt.hpp"
 #include <util.hpp>
 
 namespace Fastcgipp
@@ -30,15 +29,9 @@ namespace Fastcgipp
 	{
 		return loc;
 	}
-	
-	template<> std::locale inline make_locale<wchar_t>(std::locale& loc)
-	{
-		return std::locale(loc, new utf8Code_cvt::utf8_codecvt_facet);
-	}
 }
 
 template int Fastcgipp::Fcgistream<char, std::char_traits<char> >::Fcgibuf::empty_buffer();
-template int Fastcgipp::Fcgistream<wchar_t, std::char_traits<wchar_t> >::Fcgibuf::empty_buffer();
 template <class char_t, class traits>
 int Fastcgipp::Fcgistream<char_t, traits>::Fcgibuf::empty_buffer()
 {
@@ -104,7 +97,6 @@ int Fastcgipp::Fcgistream<char_t, traits>::Fcgibuf::empty_buffer()
 }
 
 template std::streamsize Fastcgipp::Fcgistream<char, std::char_traits<char> >::Fcgibuf::xsputn(const char_type *s, std::streamsize n);
-template std::streamsize Fastcgipp::Fcgistream<wchar_t, std::char_traits<wchar_t> >::Fcgibuf::xsputn(const char_type *s, std::streamsize n);
 template <class char_t, class traits>
 std::streamsize Fastcgipp::Fcgistream<char_t, traits>::Fcgibuf::xsputn(const char_type *s, std::streamsize n)
 {
@@ -126,7 +118,6 @@ std::streamsize Fastcgipp::Fcgistream<char_t, traits>::Fcgibuf::xsputn(const cha
 }
 
 template Fastcgipp::Fcgistream<char, std::char_traits<char> >::Fcgibuf::int_type Fastcgipp::Fcgistream<char, std::char_traits<char> >::Fcgibuf::overflow(Fastcgipp::Fcgistream<char, std::char_traits<char> >::Fcgibuf::int_type c = traits_type::eof());
-template Fastcgipp::Fcgistream<wchar_t, std::char_traits<wchar_t> >::Fcgibuf::int_type Fastcgipp::Fcgistream<wchar_t, std::char_traits<wchar_t> >::Fcgibuf::overflow(Fastcgipp::Fcgistream<wchar_t, std::char_traits<wchar_t> >::Fcgibuf::int_type c = traits_type::eof());
 template <class char_t, class traits>
 typename Fastcgipp::Fcgistream<char_t, traits>::Fcgibuf::int_type Fastcgipp::Fcgistream<char_t, traits>::Fcgibuf::overflow(Fastcgipp::Fcgistream<char_t, traits>::Fcgibuf::int_type c)
 {
@@ -139,7 +130,6 @@ typename Fastcgipp::Fcgistream<char_t, traits>::Fcgibuf::int_type Fastcgipp::Fcg
 }
 
 template void Fastcgipp::Request<char>::complete();
-template void Fastcgipp::Request<wchar_t>::complete();
 template<class char_t> void Fastcgipp::Request<char_t>::complete()
 {
 	using namespace Protocol;
@@ -163,7 +153,6 @@ template<class char_t> void Fastcgipp::Request<char_t>::complete()
 }
 
 template void Fastcgipp::Fcgistream<char, std::char_traits<char> >::dump(std::basic_istream<char>& stream);
-template void Fastcgipp::Fcgistream<wchar_t, std::char_traits<wchar_t> >::dump(std::basic_istream<char>& stream);
 template<class char_t, class traits > void Fastcgipp::Fcgistream<char_t, traits>::dump(std::basic_istream<char>& stream)
 {
 	const size_t buffer_size=32768;
@@ -177,7 +166,6 @@ template<class char_t, class traits > void Fastcgipp::Fcgistream<char_t, traits>
 }
 
 template bool Fastcgipp::Request<char>::handler();
-template bool Fastcgipp::Request<wchar_t>::handler();
 template<class char_t> bool Fastcgipp::Request<char_t>::handler()
 {
 	using namespace Protocol;
@@ -277,13 +265,3 @@ template<class char_t> bool Fastcgipp::Request<char_t>::handler()
 	return false;
 }
 
-template void Fastcgipp::Request<char>::setloc(std::locale loc_);
-template void Fastcgipp::Request<wchar_t>::setloc(std::locale loc_);
-template<class char_t> void Fastcgipp::Request<char_t>::setloc(std::locale loc_)
-{
-	loc=make_locale<char_t>(loc_);
-	out.imbue(loc);
-	err.imbue(loc);
-}
-
-#include "utf8_codecvt_facet.cpp"

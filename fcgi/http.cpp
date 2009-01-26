@@ -26,8 +26,7 @@
 
 #include <http.hpp>
 #include <util.hpp>
-
-#include "utf8_codecvt.hpp"
+#include <logging.hpp>
 
 void Fastcgipp::Http::Address::assign(const char* start, const char* end)
 {
@@ -42,7 +41,6 @@ void Fastcgipp::Http::Address::assign(const char* start, const char* end)
 }
 
 template std::basic_ostream<char, std::char_traits<char> >& Fastcgipp::Http::operator<< <char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >& os, const Address& address);
-template std::basic_ostream<wchar_t, std::char_traits<wchar_t> >& Fastcgipp::Http::operator<< <wchar_t, std::char_traits<wchar_t> >(std::basic_ostream<wchar_t, std::char_traits<wchar_t> >& os, const Address& address);
 template<class char_t, class Traits> std::basic_ostream<char_t, Traits>& Fastcgipp::Http::operator<<(std::basic_ostream<char_t, Traits>& os, const Address& address)
 {
 	using namespace std;
@@ -103,7 +101,6 @@ template<class char_t, class Traits> std::basic_ostream<char_t, Traits>& Fastcgi
 }
 
 template std::basic_istream<char, std::char_traits<char> >& Fastcgipp::Http::operator>> <char, std::char_traits<char> >(std::basic_istream<char, std::char_traits<char> >& is, Address& address);
-template std::basic_istream<wchar_t, std::char_traits<wchar_t> >& Fastcgipp::Http::operator>> <wchar_t, std::char_traits<wchar_t> >(std::basic_istream<wchar_t, std::char_traits<wchar_t> >& is, Address& address);
 template<class char_t, class Traits> std::basic_istream<char_t, Traits>& Fastcgipp::Http::operator>>(std::basic_istream<char_t, Traits>& is, Address& address)
 {
 	using namespace std;
@@ -149,7 +146,6 @@ template<class char_t, class Traits> std::basic_istream<char_t, Traits>& Fastcgi
 }
 
 template bool Fastcgipp::Http::parse_xml_value<char>(const char* const name, const char* start, const char* end, std::basic_string<char>& string);
-template bool Fastcgipp::Http::parse_xml_value<wchar_t>(const char* const name, const char* start, const char* end, std::basic_string<wchar_t>& string);
 template<class char_t> bool Fastcgipp::Http::parse_xml_value(const char* const name, const char* start, const char* end, std::basic_string<char_t>& string)
 {
 	using namespace std;
@@ -182,30 +178,6 @@ template<class char_t> bool Fastcgipp::Http::parse_xml_value(const char* const n
 	return true;
 }
 
-bool Fastcgipp::Http::char_to_string(const char* data, size_t size, std::wstring& string)
-{
-	const size_t buffer_size=512;
-	wchar_t buffer[buffer_size];
-	using namespace std;
-
-	if(size)
-	{
-		codecvt_base::result cr=codecvt_base::partial;
-		while(cr==codecvt_base::partial)
-		{{
-			wchar_t* it;
-			const char* tmp_data;
-			mbstate_t conversion_state = mbstate_t();
-			cr=use_facet<codecvt<wchar_t, char, mbstate_t> >(locale(locale::classic(), new utf8Code_cvt::utf8_codecvt_facet)).in(conversion_state, data, data+size, tmp_data, buffer, buffer+buffer_size, it);
-			string.append(buffer, it);
-			size-=tmp_data-data;
-			data=tmp_data;
-		}}
-		if(cr==codecvt_base::error) return false;
-		return true;
-	}
-}
-
 int Fastcgipp::Http::atoi(const char* start, const char* end)
 {
 	bool neg=false;
@@ -222,7 +194,6 @@ int Fastcgipp::Http::atoi(const char* start, const char* end)
 }
 
 template int Fastcgipp::Http::percent_escaped_to_real_bytes(const char* source, char* dest, size_t size);
-template int Fastcgipp::Http::percent_escaped_to_real_bytes(const wchar_t* data, wchar_t* data, size_t size);
 template<class char_t> int Fastcgipp::Http::percent_escaped_to_real_bytes(const char_t* source, char_t* dest, size_t size)
 {
 	int i=0;
@@ -256,7 +227,6 @@ template<class char_t> int Fastcgipp::Http::percent_escaped_to_real_bytes(const 
 }
 
 template bool Fastcgipp::Http::Session<char>::fill(const char* data, size_t size);
-template bool Fastcgipp::Http::Session<wchar_t>::fill(const char* data, size_t size);
 template<class char_t> bool Fastcgipp::Http::Session<char_t>::fill(const char* data, size_t size)
 {
 	using namespace std;
@@ -284,19 +254,29 @@ template<class char_t> bool Fastcgipp::Http::Session<char_t>::fill(const char* d
 		}
 		else if(name_size==12 && !memcmp(name, "CONTENT_TYPE", 12))
 		{
+			info(name << ": " << value);
 			const char* end=(char*)memchr(value, ';', value_size);
 			boundary_size = 0;
 			status=char_to_string(value, end?end-value:value_size, svalue);
 			if(end)
 			{
-				const char* start=(char*)memchr(end, '=', value_size-(end-data));
-				if(start)
-				{
-					boundary_size=value_size-(++start-value);
-					boundary.reset(new char[boundary_size]);
-					memcpy(boundary.get(), start, boundary_size);
+				const char* start=end;
+				// 9 is the length of "boundary="
+				while (start-value < value_size-9) {
+					if (memcmp(start, "boundary=", 9) == 0) {
+						start += 9;
+						if ((end = strpbrk(start, "; \n\r\t")) == NULL)
+							boundary_size=value+value_size-(start);
+						else
+							boundary_size=end-(start);
+						boundary.reset(new char[boundary_size]);
+						memcpy(boundary.get(), start, boundary_size);
+						break;
+					}
+					start++;
 				}
 			}
+			log_dump(boundary.get(), boundary_size);
 		}
 		else if(name_size==12 && !memcmp(name, "QUERY_STRING", 12) && value_size)
 		{
@@ -320,7 +300,6 @@ template<class char_t> bool Fastcgipp::Http::Session<char_t>::fill(const char* d
 }
 
 template void Fastcgipp::Http::Session<char>::parse_url(const std::basic_string<char>&, std::map<std::basic_string<char>, std::basic_string<char> >&);
-template void Fastcgipp::Http::Session<wchar_t>::parse_url(const std::basic_string<wchar_t>&, std::map<std::basic_string<wchar_t>, std::basic_string<wchar_t> >&);
 template <class char_t> void Fastcgipp::Http::Session<char_t>::parse_url(const std::basic_string<char_t> &url, std::map<std::basic_string<char_t>, std::basic_string<char_t> > &query)
 {
 	// parse the query_string into a map
@@ -357,25 +336,24 @@ template <class char_t> void Fastcgipp::Http::Session<char_t>::parse_url(const s
 }
 
 template void Fastcgipp::Http::Session<char>::fill_posts(const char* data, size_t size);
-template void Fastcgipp::Http::Session<wchar_t>::fill_posts(const char* data, size_t size);
 template<class char_t> void Fastcgipp::Http::Session<char_t>::fill_posts(const char* data, size_t size)
 {
 	using namespace std;
+	info("boundary_size = " << boundary_size);
+	log_dump(data, size);
 	if (boundary_size == 0) {
 		typename strmap::iterator iter;
 		strmap p;
 		char_t *buffer = new char_t[size];
-		basic_string<char_t> url;
+		basic_string<char_t> url, value;
 		char_to_string(data, size, url);
 		parse_url(url, p);
 		for (iter=p.begin(); iter!=p.end(); iter++) {
-			Post<char_t> the_post;
-			the_post.type = Post<char_t>::form;
 			size_t val_len = iter->second.length();
 			char_t *unescaped = buffer;
 			percent_escaped_to_real_bytes(iter->second.c_str(), unescaped, val_len);
-			the_post.value.assign(unescaped);
-			post[iter->first] = the_post;
+			value.assign(unescaped);
+			post[iter->first] = value;
 		}
 		delete[] buffer;
 		return;
@@ -409,25 +387,32 @@ template<class char_t> void Fastcgipp::Http::Session<char_t>::fill_posts(const c
 			if(!memcmp(body_start, "\r\n\r\n", 4)) break;
 		}
 		body_start+=4;
-		basic_string<char_t> name;
+		basic_string<char_t> name, value;
 
 		if(parse_xml_value("name", start, body_start, name))
 		{
-			Post<char_t>& the_post=post[name];
-			if(parse_xml_value("filename", start, body_start, the_post.value))
+			if(parse_xml_value("filename", start, body_start, value))
 			{
-				the_post.type=Post<char_t>::file;
-				the_post.size=end-body_start;
-				if(the_post.size)
+				size_t size=end-body_start;
+				if(size)
 				{
-					the_post.data.reset(new char[the_post.size]);
-					memcpy(the_post.data.get(), body_start, the_post.size);
+					basic_string<char_t> mime;
+					basic_string<char_t> headers;
+					char_to_string(start, body_start-start, headers);
+					size_t ct_off = headers.find("Content-Type: ");
+					if (ct_off != basic_string<char_t>::npos) {
+						mime = trim(headers.substr(ct_off+13));
+					}
+					boost::shared_array<char> data;
+					data.reset(new char[size]);
+					memcpy(data.get(), body_start, size);
+					files[name] = upload_file<char_t>::create(value, mime, data, size);
 				}
 			}
 			else
 			{
-				the_post.type=Post<char_t>::form;
-				char_to_string(body_start, end-body_start, the_post.value);
+				basic_string<char_t>& value=post[name];
+				char_to_string(body_start, end-body_start, value);
 			}
 		}
 

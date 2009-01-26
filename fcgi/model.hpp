@@ -6,9 +6,12 @@
 
 #include "db.hpp"
 
+//////////////////////////////////////////////////////////////////////////
+// class model
+/////////////////////////////////////////////////////////////////////////
 class model {
 	public:
-		boost::shared_ptr<model> ptr;
+		typedef boost::shared_ptr<model> ptr;
 
 	public:
 		model();
@@ -17,6 +20,7 @@ class model {
 		virtual ~model() {}
 		int id();
 		virtual std::string json() = 0;
+		static std::list<ptr> fetch_all(const std::string& type);
 	
 	protected:
 		virtual const std::string& table_name() { return _nothing_; }
@@ -31,13 +35,16 @@ class model {
 		db::Result values;
 };
 
+//////////////////////////////////////////////////////////////////////////
+// class static_dhcp
+/////////////////////////////////////////////////////////////////////////
 class static_dhcp : public model {
 	public:
 		static_dhcp() : model() {}
 		static_dhcp(int i) : model(i) {}
 		static_dhcp(db::Result& vals) : model(vals) {}
 		virtual ~static_dhcp() {}
-		static std::list<static_dhcp> all();
+		static std::list<model::ptr> all();
 
 	protected:
 		virtual const std::string& table_name() { return _table_name; }
@@ -54,6 +61,32 @@ class static_dhcp : public model {
 		void ip_addr(std::string& value) { values["ip_addr"] = value; }
 		std::string& mac_addr() { return values["mac_addr"]; }
 		void mac_addr(std::string& value) { values["mac_addr"] = value; }
+};
+
+//////////////////////////////////////////////////////////////////////////
+// class variable
+/////////////////////////////////////////////////////////////////////////
+class variable : public model {
+	public:
+		variable() : model() {}
+		variable(int i) : model(i) {}
+		variable(db::Result& vals) : model(vals) {}
+		virtual ~variable() {}
+		static std::list<model::ptr> all();
+
+	protected:
+		virtual const std::string& table_name() { return _table_name; }
+
+	private:
+		static const std::string _table_name;
+	
+	// variable access interface
+	public:
+		virtual std::string json();
+		std::string& name() { return values["name"]; }
+		void name(std::string& value) { values["name"] = value; }
+		std::string& value() { return values["value"]; }
+		void value(std::string& value) { values["value"] = value; }
 };
 
 #endif

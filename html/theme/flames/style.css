@@ -36,6 +36,7 @@ h1, h2, h3, h4, h5, h6 {
   padding: 0;
   font-weight: normal;
   font-family: Helvetica, Arial, sans-serif;
+  clear: both;
 }
 
 h1 {
@@ -699,7 +700,7 @@ a.jslink {
 
 /* Settings form css */
 .label {
-	font: bold;
+	/*font: bold;*/
 	display: inline;
 }
 .error li {
@@ -743,7 +744,7 @@ form .field-item > .edit > ul > li {
 	list-style-image: none;
 	background-image: none;
 	margin-right: .4em;
-	padding: none;
+	/*padding: none;*/
 }
 .submit {
 	clear: both;
@@ -753,7 +754,7 @@ form .field-item > .edit > ul > li {
 	font-size: 80%;
 	position: relative;
 	width: 550px;
-	display: float;
+	/*display: float;*/
 }
 a.promote {
 	padding-left:12px; margin-right:10px; background:url(icons/icon_addlink.gif) 0 .25em no-repeat;

@@ -15,10 +15,14 @@ var url = document.location + ""; url = url.replace(/http(s)?:\/\/[^\/]+/, '');
 		var callback_error = function(request, textStatus, errorThrown) {
 			/* replace the current page with the html error page */
 			var re = /.*<html[^>]*>(.*)<\/html>.*/
-			html = request.responseText.replace(re, '\1');
-			alert("ajax error!\nhttp-status: "+request.status);
-			if (html.length > 0)
-				$("html").html(html);
+			var html = request.responseText.replace(re, '\1');
+			alert("ajax error!\nhttp-status: "+request.status+"\ntextStatus: "+textStatus+"\nerrorThrown: "+errorThrown);
+			if (html.length > 0) {
+				$('body').append('<div class="popup">'+html+'</div>');
+				$('.popup').unbind('click').click(function(e) {
+					$(this).remove();
+				});
+			}
 		};
 		return jQuery.ajax({
 			type: "POST",
@@ -61,7 +65,7 @@ var url = document.location + ""; url = url.replace(/http(s)?:\/\/[^\/]+/, '');
 		}
 	}
 	$.dump = function(obj) {
-		var v = "<pre>"+_dump(obj)+"</pre>";
+		var v = "<pre>"+_dump(obj, '')+"</pre>";
 		$('body').append('<div class="popup">'+v+'</div>');
 		$('.popup').unbind('click').click(function(e) {
 			$(this).remove();
@@ -167,6 +171,200 @@ var url = document.location + ""; url = url.replace(/http(s)?:\/\/[^\/]+/, '');
 	$(".combobox").combobox();
 	js_links();
 	row_hover();
+
+	function arr_to_obj(a) {
+		var o = {};
+		for(var i=0;i<a.length;i++) {
+			o[a[i]]=null;
+		}
+		return o;
+	};
+
+	function filter_attributes(attrs, ok_attrs) {
+		// check for baddies in the attributes
+		var ok_attrs = arr_to_obj(ok_attrs.concat(["alt", "class", "style", "readonly", "tabindex", "onselect", "disabled", "accesskey", "onfocus", "onblur", "onchange", "onclick", "ondblclick", "onmousedown", "onmouseup", "onmouseover", "onmousemove", "onmouseout", "onkeypress", "onkeydown", "onkeyup"]));
+		var attributes = {};
+		for (a in attrs) {
+			if (typeof(attrs[a]) == 'string' && a in ok_attrs) {
+				attributes[a] = attrs[a];
+			}
+		}
+		return attributes;
+	}
+
+	function render_attributes(element) {
+		// FIXME: html escape attr value
+		var ret = "";
+		for (attr in element.attributes) {
+			ret += attr + '="' + element.attributes[attr] + '" ';
+		}
+		return ret;
+	}
+
+	function render_children(elements, values) {
+		if (values == null) values = {}
+		var i, ret = "", value;
+		for (i=0; i<elements.length; i++) {
+			el = elements[i];
+			if (el.type == 'fieldset')
+				elements[i].value = values;
+			else if (el.name in values)
+				elements[i].value = eval('values.'+el.name);
+			else if (!("value" in elements[i]))
+				elements[i].value = null;
+
+			if (typeof el.type == 'string' &&
+					eval('typeof $.render_' + el.type) == 'function') {
+				ret += eval('$.render_' + elements[i].type + '(elements[i])');
+			}
+		}
+		return ret;
+	}
+
+	function element_common(element, attrs) {
+		element.attributes = filter_attributes(element, attrs);
+		var required_attrs = arr_to_obj(["label", "description", "name", "value"]);
+		for (attr in required_attrs) {
+			if (!(attr in element)) {
+				eval('element.'+attr+' = ""');
+			}
+		}
+		if (element.id == null) {
+			element.id = 'id_'+element.name;
+		}
+		if (element.value == null && element.default_value == null) {
+			element.value = "";
+		} else if (element.value == null && element.default_value != null) {
+			element.value = element.default_value;
+		}
+	}
+
+	$.render_form = function(form, values) {
+		if (typeof form == 'array' && values == null) {
+			values = form[1];
+			form = form[0];
+		}
+		var attributes = ["action","method","enctype","onsubmit"];
+		element_common(form, attributes);
+		return '<form '+render_attributes(form)+'>'+render_children(form.elements, values)+'</form>\n';
+	};
+
+	$.render_fieldset = function(el) {
+		var attributes = [];
+		element_common(form, attributes);
+		return '<fieldset '+render_attributes(el)+'><legend>'+el.label+'</legend>\n'+render_children(el.elements, el.value)+'</fieldset>\n';
+	};
+
+	$.render_textbox = function(el) {
+		var attributes = ["maxlength", ];
+		element_common(el, attributes);
+		return '<div class="field-item">\n'+
+			'\t<span class="label"><label for="'+el.id+'">'+el.label+'</label><div class="description">'+el.description+'</div></span>\n'+
+
+			'\t<span class="edit"><input name="'+el.name+'" id="'+el.id+'" type="text" value="'+el.value+'" '+render_attributes(el)+'/></span><span class="error"></span>\n</div>';
+	};
+
+	$.render_textarea = function(el) {
+		var attributes = ["rows", "cols", ];
+		element_common(el, attributes);
+		return '<div class="field-item">\n'+
+			'\t<span class="label"><label for="'+el.id+'">'+el.label+'</label><div class="description">'+el.description+'</div></span>\n'+
+
+			'\t<span class="edit"><textarea name="'+el.name+'" id="'+el.id+'" '+render_attributes(el)+'>'+el.value+'</textarea></span><span class="error"></span>\n</div>';
+	};
+
+	$.render_password = function(el) {
+		var attributes = ["maxlength", ];
+		element_common(el, attributes);
+		return '<div class="field-item">\n'+
+			'\t<span class="label"><label for="'+el.id+'">'+el.label+'</label><div class="description">'+el.description+'</div></span>\n'+
+
+			'\t<span class="edit"><input name="'+el.name+'" id="'+el.id+'" type="'+el.type+'" value="'+el.value+'" '+render_attributes(el)+'/></span><span class="error"></span>\n</div>';
+	};
+
+	$.render_checkbox = function(el) {
+		var attributes = [];
+		element_common(el, attributes);
+		return '<div class="field-item">\n'+
+			'\t<span class="label"><label for="'+el.id+'">'+el.label+'</label><div class="description">'+el.description+'</div></span>\n'+
+			'\t<span class="edit"><input type="checkbox" name="'+el.name+'" id="'+el.id+'" value="'+el.value+'" '+render_attributes(el)+'/></span><span class="error"></span>\n</div>\n';
+	};
+
+	function render_radio_options(el) {
+		var i=0, ret="";
+		var opt;
+		var attributes = [];
+		for (i=0; i<el.options.length; i++) {
+			opt = el.options[i];
+			element_common(opt, attributes);
+			checked = (el.value == opt.value) ? 'checked="checked"' : '';
+			ret += '<li><label><input type="radio" '+checked+' id="'+el.id+'_'+i+'" value="'+opt.value+'" name="'+el.name+'" '+render_attributes(el)+'/>'+opt.label+'</label></li>';
+		}
+		return ret;
+	}
+
+	$.render_radios = function(el) {
+		var attributes = [];
+		element_common(el, attributes);
+		return '<div class="field-item">\n'+
+			'<span class="label"><label for="'+el.id+'">'+el.label+'</label><div class="description">'+el.description+'</div></span>\n'+
+			'<span class="edit"><ul>\n'+
+			render_radio_options(el) +
+			'</ul></span><span class="error"></span>\n</div>';
+	};
+
+	function render_select_options(el) {
+		var i, ret="", opt;
+		for (i=0; i<el.options.length; i++) {
+			opt = el.options[i];
+			selected = (el.value == opt.value) ? 'selected="selected"' : '';
+			ret += '<option '+selected+' value="'+opt.value+'">'+opt.label+'</option>';
+		}
+		return ret;
+	}
+
+	$.render_select = function(el) {
+		var attributes = [];
+		element_common(el, attributes);
+		return '<div class="field-item">\n'+
+			'<span class="label"><label for="'+el.id+'">'+el.label+'</label><div class="description">'+el.description+'</div></span>\n'+
+			'<select name="'+el.name+'">\n'+
+			render_select_options(el) +
+			'</select><span class="error"></span>\n</div>';
+	};
+
+	$.render_combobox = function(el) {
+		var attributes = [];
+		element_common(el, attributes);
+		return '<div class="field-item">\n'+
+			'<span class="label"><label for="'+el.id+'">'+el.label+'</label><div class="description">'+el.description+'</div></span>\n'+
+			'<span class="edit"><ul>\n'+
+			render_select_options(el) +
+			'</ul></span><span class="error"></span>\n</div>';
+	};
+
+	$.render_button = function(el) {
+		var attributes = [];
+		var button_type = ("button_type" in el) ? el.button_type : "button";
+		element_common(el, attributes);
+		return '<div class="field-item">\n'+
+			'\t<span class="edit"><input type="'+button_type+'" name="'+el.name+'" id="'+el.id+'" value="'+el.value+'" '+render_attributes(el)+'/></span><span class="error"></span>\n</div>\n';
+	};
+
+	$.render_file = function(el) {
+		var attributes = [];
+		element_common(el, attributes);
+		return '<div class="field-item">\n'+
+			'\t<span class="label"><label for="'+el.id+'">'+el.label+'</label><div class="description">'+el.description+'</div></span>\n'+
+
+			'\t<span class="edit"><input name="'+el.name+'" id="'+el.id+'" type="'+el.type+'" '+render_attributes(el)+'/></span><span class="error"></span>\n</div>';
+	};
+
+	$.render_hidden = function(el) {
+		var attributes = [];
+		element_common(el, attributes);
+		return '<input type="hidden" name="'+el.name+'" id="'+el.id+'" value="'+el.value+'"/>\n';
+	};
 
 }); })(jQuery);
 

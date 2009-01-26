@@ -41,18 +41,26 @@ int model::id() {
 	return x;
 }
 
+std::list<model::ptr> model::fetch_all(const std::string& type) {
+
+	if (type == "static_dhcp") {
+		return static_dhcp::all();
+	}
+	return std::list<model::ptr>();
+}
+
 // template<class model_class>::all()
 #define model_all(model_class)                                       \
-std::list<model_class> model_class::all() {                          \
+std::list<model::ptr> model_class::all() {                           \
 	model_class v;                                                   \
-	std::list<model_class> ret;                                      \
+	std::list<model::ptr> ret;                                       \
 	db::Results::iterator i;                                         \
 	db::Results results;                                             \
 	char sql[128];                                                   \
 	sprintf(sql, "select * from %s", v.table_name().c_str());        \
 	v._db->execute(sql, results);                                    \
 	for (i=results.begin(); i!=results.end(); i++) {                 \
-		model_class r(*i);                                           \
+		model::ptr r(new model_class(*i));                           \
 		ret.push_back(r);                                            \
 	}                                                                \
 	return ret;                                                      \
@@ -78,7 +86,21 @@ std::string static_dhcp::json() {
 }
 
 
+//////////////////////////////////////////////////////////////////////////
+// class variable
+/////////////////////////////////////////////////////////////////////////
+const std::string variable::_table_name = "app_variable";
 
+model_all(variable)
+
+std::string variable::json() {
+	std::stringstream ss;
+	ss << "{ "
+	   << name() << ": \""
+	   << value() << "\", "
+	   << " }";
+	return ss.str();
+}
 
 
 

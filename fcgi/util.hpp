@@ -1,9 +1,12 @@
 #ifndef _UTIL_H_
 #define _UTIL_H_ 1
 
+#include <cctype>
 #include <string>
+#include <algorithm>
 #include <ostream>
 #include <fstream>
+#include <logging.hpp>
 
 //#define UNICODE_TEXT
 
@@ -15,12 +18,28 @@
 #define _S(A) A
 #endif
 
-void log_close();
-void _log(const char *file, char const *fn, int line, const std::basic_string<char> msg);
-void _log(const char *file, char const *fn, int line, const std::basic_string<wchar_t> msg);
-void _log(const char *file, char const *fn, int line, const char* msg);
-void _log(const char *file, char const *fn, int line, std::ostream &msg);
-#define msg(A) _log(__FILE__, __FUNCTION__, __LINE__, A)
-#define here(A) msg("")
+static inline std::string check_url(std::string url) {
+	return url;
+}
+
+static inline void lower_case(std::string &s) {
+	transform(s.begin(), s.end(), s.begin(), (int(*)(int))tolower);
+}
+
+// breaks str up on any char in delimiter
+std::vector<std::string> explode(const std::string& delimiter, const std::string& str);
+
+static inline std::string ltrim(const std::string &s) {
+	return s.substr(s.find_first_not_of(" \t\r\n"));
+}
+
+static inline std::string rtrim(const std::string &s) {
+	return s.substr(0, s.find_last_not_of(" \t\r\n"));
+}
+
+static inline std::string trim(const std::string &s) {
+	return s.substr(s.find_first_not_of(" \t\r\n"),
+					s.find_last_not_of(" \t\r\n"));
+}
 
 #endif

@@ -25,7 +25,6 @@
 #include <queue>
 #include <map>
 #include <string>
-#include <locale>
 
 #include <boost/shared_array.hpp>
 #include <boost/function.hpp>
@@ -47,19 +46,13 @@ namespace Fastcgipp
 	 * Once all client data is organized, response() will be called.
 	 * At minimum, derivations of this class must define response().
 	 *
-	 * If you want to use UTF-8 encoding pass wchar_t as the template
-	 * argument, use setloc() to setup a UTF-8 locale and use wide 
-	 * character unicode internally for everything. If you want to use
-	 * a 8bit character set encoding pass char as the template argument and
-	 * setloc() a locale with the corresponding character set.
-	 *
 	 * @tparam char_t Character type for internal processing (wchar_t or char)
 	 */
 	template<class char_t> class Request
 	{
 	public:
 		//! Initializes what it can. set() must be called by Manager before the data is usable.
-		Request(): state(Protocol::PARAMS)  { setloc(std::locale::classic()); out.exceptions(std::ios_base::badbit | std::ios_base::failbit | std::ios_base::eofbit); session.clear_post_buffer(); }
+		Request(): state(Protocol::PARAMS)  { out.exceptions(std::ios_base::badbit | std::ios_base::failbit | std::ios_base::eofbit); session.clear_post_buffer(); }
 
 	protected:
 		//! Structure containing all HTTP session data
@@ -104,9 +97,6 @@ namespace Fastcgipp
 		 */
 		virtual void in_handler(int bytes_received) { };
 
-		//! The locale associated with the request. Should be set with setloc(), not directly.
-		std::locale loc;
-
 		//! The message associated with the current handler() call.
 		/*!
 		 * This is only of use to the library user when a non Fast_cGI (type=0) Message is passed
@@ -115,18 +105,6 @@ namespace Fastcgipp
 		 * @sa callback
 		 */
 		Message message;
-
-		//! Set the requests locale
-		/*!
-		 * This function both sets loc to the locale passed to it and imbues the locale into the
-		 * out and err stream. The user should always call this function as opposed to setting the
-		 * locales directly is this functions insures the utf8 code conversion is functioning properly.
-		 *
-		 * @param[in] loc_ New locale
-		 * @sa loc
-		 * @sa out
-		 */
-		void setloc(std::locale loc_);
 
 		//! Callback function for dealings outside the fastcgi++ library
 		/*!

@@ -21,6 +21,7 @@
 
 #include <transceiver.hpp>
 #include <util.hpp>
+#include <logging.hpp>
 #include <boost/bind.hpp>
 #include <sys/inotify.h>
 #include <unistd.h>
@@ -54,7 +55,7 @@ bool Fastcgipp::Transceiver::monitor_binary() {
 			*basename = 0;
 		}
 		basename = rindex(exepath, '/') + 1;
-		std::cerr << "basename: " << basename << std::endl;
+		info("basename: " << basename);
 	}
 
 	bytes_read = read(inotify_fd, &buffer, sizeof(buffer));
@@ -71,13 +72,13 @@ bool Fastcgipp::Transceiver::monitor_binary() {
 						struct tm t;
 						time_t now = time(NULL);
 						localtime_r(&now, &t);
-						std::cerr << t.tm_mday << "-" << t.tm_mon << "-" << t.tm_year
+						warn(t.tm_mday << "-" << t.tm_mon << "-" << t.tm_year
 								  << " " << t.tm_hour << ":" << t.tm_min << ":" << t.tm_sec
-								  << ": found newer file, reloading..." << std::endl;
+								  << ": found newer file, reloading...");
 						stop();
 						for (i = 0; i < 10; i++) {
 							execve(exepath, prog_argv, prog_env);
-							std::cerr << "errno = " << errno << std::endl;
+							error("errno = " << errno);
 							switch (errno) {
 								case ETXTBSY:
 									usleep(500000);
@@ -99,7 +100,7 @@ bool Fastcgipp::Transceiver::monitor_binary() {
 }
 
 void Fastcgipp::Transceiver::stop() {
-	std::cerr << "stopping connections" << std::endl;
+	warn("stopping connections");
 	struct sockaddr_un saddr;
 	socklen_t len = sizeof(saddr);
 	if (socket) {
@@ -116,11 +117,11 @@ void Fastcgipp::Transceiver::stop() {
 	close(wake_up_fd_out);
 	close(wake_up_fd_in);
 	close(inotify_fd);
-	log_close();
+	Fastcgipp::logger::shutdown();
 }
 
 void Fastcgipp::Transceiver::terminate() {
-	std::cerr << "quitting" << std::endl;
+	warn("quitting");
 	stop();
 	exit(0);
 }
@@ -312,7 +313,7 @@ Fastcgipp::Transceiver::Transceiver(int fd_, boost::function<void(Protocol::Full
 	fcntl(wake_up_fd_in, F_SETFL, (fcntl(wake_up_fd_in, F_GETFL)|O_NONBLOCK)^O_NONBLOCK);	
 	wake_up_fd_out=soc_pair[1];	
 
-	std::cerr << "socket: " << socket << ", wake_in: " << wake_up_fd_in << ", wake_out: " << wake_up_fd_out << std::endl;
+	info("socket: " << socket << ", wake_in: " << wake_up_fd_in << ", wake_out: " << wake_up_fd_out);
 	
 	fcntl(socket, F_SETFL, (fcntl(socket, F_GETFL)|O_NONBLOCK)^O_NONBLOCK);
 	poll_fds[0].events = POLLIN|POLLHUP;
@@ -323,7 +324,7 @@ Fastcgipp::Transceiver::Transceiver(int fd_, boost::function<void(Protocol::Full
 	// set up inotify to restart ourselves in the case of a newer version
 	// XXX DEBUG
 	inotify_fd = inotify_init();
-	std::cerr << "inotify_fd = " << inotify_fd << std::endl;
+	info("inotify_fd = " << inotify_fd);
 	char mypath[256];
 	memset(mypath, 0, sizeof(mypath));
 	if (readlink("/proc/self/exe", mypath, sizeof(mypath)) < 0) {
@@ -332,7 +333,7 @@ Fastcgipp::Transceiver::Transceiver(int fd_, boost::function<void(Protocol::Full
 		inotify_fd = -1;
 	} else {
 		*rindex(mypath, '/') = 0;
-		std::cerr << "mypath = " << mypath << std::endl;
+		info("mypath = " << mypath);
 		if (inotify_add_watch(inotify_fd, mypath, IN_MOVED_TO | IN_ATTRIB | IN_CLOSE_WRITE | IN_CREATE) < 0) {
 			perror("inotify_add_watch");
 			close(inotify_fd);

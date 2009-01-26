@@ -41,93 +41,158 @@
 #include <request.hpp>
 #include <manager.hpp>
 #include <util.hpp>
+#include <logging.hpp>
 #include <db.hpp>
 #include <model.hpp>
 
 using std::basic_string;
 
-/*
- element types
- fieldset
- textbox
- textarea
- checkbox
- radio
- select/multiselect
- combobox
+#define foreach_last(T, A, M) for (T::iterator M##_next=A.begin(),\
+		T::iterator M = M##_next++; \
+		M != A.end(); M##_last++, M++)
+#define foreach(T, A, M) for (T::iterator M = A.begin(); \
+		M != A.end(); M++)
 
-{ type: "form", name: "dhcp-settings-form",
-	// id: "defaults to name", class: "form ajax json", method: "post", action: "gobabygogo.cgi",
-	elements: [
-		{ type: "radio", name: "dhcp_enabled", label: "DHCP server", 
-		  description: "Enable the DHCP server.",
-		  default_value: "off", options:
-			[
-				{ label: "Enabled", value: "on" },
-				{ label: "Disabled", value: "off" },
-			],
-		},
-		{ type: "radio", name: "dhcp_dynamic_enabled", label: "Offer dynamic IP addresses", 
-		  description: "Allow dynamic IP addresses to be handed out in addition to any static entries listed below.",
-		  default_value: "off", options:
-			[
-				{ label: "Enabled", value: "on" },
-				{ label: "Disabled", value: "off" },
-			],
-		},
-		{ type: "textbox", name: "dhcp_start_ip", label: "Dynamic DHCP beginning address", 
-		  description: "The DHCP server can give out IP addresses to other than the static entries below.  Enter the range of IP addresses to hand out dynamically here.  Make sure that this range does not overlap with the static DHCP entries.",
-		  default_value: "10.0.0.100",
-		},
-		{ type: "textbox", name: "dhcp_end_ip", label: "Dynamic DHCP end address", 
-		  default_value: "10.0.0.200",
-		},
-		{ type: "select", name: "dhcp_lease_time", label: "Lease length", 
-		  description: "If you have a lot of DHCP users, you may want to keep this time short or the server may run out of IP addresses.  If you are only using static DHCP, then longer times means the clients won't ask the server for addresses as often.",
-		  default_value: "86400", options:
-			[
-				{ label: "20 minutes", value: 1200 },
-				{ label: "30 minutes", value: 1800 },
-				{ label: "1 hour", value: 3600 },
-				{ label: "3 hours", value: 10800 },
-				{ label: "6 hours", value: 21600 },
-				{ label: "12 hours", value: 43200},
-				{ label: "1 day", value: 86400 },
-				{ label: "2 days", value: 172800 },
-				{ label: "3 days", value: 259200 },
-				{ label: "4 days", value: 345600 },
-				{ label: "5 days", value: 432000 },
-				{ label: "6 days", value: 518400 },
-				{ label: "1 week", value: 604800 },
-			],
-		},
-	]
-}
-
-*/
-
-class JSON_Request: public Fastcgipp::Request<wchar_type>
+class JSON_Request: public Fastcgipp::Request<char>
 {
-	bool json_response() {
-		std::basic_string<wchar_type> response;
-		std::list<static_dhcp>::iterator rowiter;
-		std::list<static_dhcp> statichosts = static_dhcp::all();
-		std::stringstream ss;
-		ss << "[\n";
-		for (rowiter=statichosts.begin(); rowiter!=statichosts.end(); ) {
-			ss << rowiter->json();
-			if (++rowiter != statichosts.end()) {
+	std::stringstream& model_all(std::stringstream& ss, const std::string& type) {
+		here();
+		std::list<model::ptr>::iterator rowiter;
+		std::list<model::ptr> models = model::fetch_all(type);
+		ss << type << ": [\n";
+		for (rowiter=models.begin(); rowiter!=models.end(); ) {
+			ss << (*rowiter)->json();
+			if (++rowiter != models.end()) {
 				ss << ",\n";
 			}
 		}
-		ss << "\n]";
+		ss << "\n],\n";
+		return ss;
+	}
+
+	std::stringstream& db_entries(std::stringstream& ss) {
+		here();
+		std::vector<std::string> models = explode(",", session.post["entries"]);
+		foreach(std::vector<std::string>, models, i) {
+			model_all(ss, *i);
+		}
+		return ss;
+	}
+
+	std::stringstream& form_response(std::stringstream& ss) {
+		here();
+		// build the form
+		std::string form_file_name = "js/json/forms/";
+		std::string form_name = session.post["form"];
+		form_file_name += form_name;
+		std::ifstream form_file;
+		form_file.open(form_file_name.c_str(), std::ios::binary);
+		if (form_file) {
+		here();
+			ss << "form: ";
+			int bytes_read;
+			form_file.seekg (0, std::ios::end);
+			bytes_read = form_file.tellg();
+			form_file.seekg (0, std::ios::beg);
+
+			char *buf = new char[bytes_read];
+			form_file.read(buf, bytes_read);
+			ss.write(buf, bytes_read);
+			form_file.close();
+			delete[] buf;
+			ss << ",";
+			//std::list<form_values> = form_values::fetch(form_name);
+			// verify input data
+			// send the form (with return code/error info)
+			ss << "form_values: {}";
+			ss << ",\n";
+		} else {
+		here();
+			ss << "form: {},\n";
+		}
+		return ss;
+	}
+
+	bool json_response() {
+		here();
+		std::stringstream ss;
+		std::string response;
+		ss << "{\n";
+		// handle requests
+			for(Fastcgipp::strmap::iterator it=session.post.begin(); it!=session.post.end(); ++it)
+			{
+				info(it->first << ": " << it->second);
+			}
+		if (session.post.find("form") != session.post.end()) {
+			form_response(ss);
+		}
+		if (session.post.find("entries") != session.post.end()) {
+			db_entries(ss);
+		}
+		
+		ss << "}";
 		response = ss.str();
 		out << "Content-Type: application/json\r\n"
-			<< "Expires: Wed, 14 Jan 2000 05:45:48 GMT\r\n"
+			<< "Expires: Wed, 31 Dec 1969, 23:59:59 GMT\r\n"
 		    << "Content-Length: " << response.length() << "\r\n\r\n"
 			<< response;
 
+		info(std::endl << "Content-Type: application/json\r\n"
+			<< "Expires: Wed, 31 Dec 1969, 23:59:59 GMT\r\n"
+		    << "Content-Length: " << response.length() << "\r\n\r\n"
+			<< response);
+
+
 		return true;
+	}
+
+	bool debug()
+	{
+		// This session data structure is defined in http.hpp
+		info("**** Session Parameters ****");
+		for (Fastcgipp::strmap::iterator h=session.headers.begin(); h!=session.headers.end(); h++) {
+			info(h->first << ": " << h->second);
+		}
+
+		info("*** Request data ***");
+		for(Fastcgipp::strmap::iterator it=session.get.begin(); it!=session.get.end(); ++it) {
+			info(it->first << ": " << it->second);
+		}
+
+
+		//Fastcgipp::Http::Post is defined in http.hpp
+		info("*** Post Data ***");
+		if(session.post.size()) {
+			for(Fastcgipp::strmap::iterator it=session.post.begin(); it!=session.post.end(); ++it)
+			{
+				info(it->first << ": " << it->second);
+			}
+		} else {
+			info("No post data");
+		}
+		info("*** Files ***");
+		if(session.files.size()) {
+			for(Fastcgipp::filemap::iterator it=session.files.begin(); it!=session.files.end(); ++it) {
+				// When the post type is a file, the filename is stored in Post::value;
+				info(std::endl << "Filename: " << it->second->name() << std::endl
+				    << "path: " << it->second->path() << std::endl
+				    << "mime: " << it->second->mime() << std::endl
+				    << "Size: " << it->second->size() << std::endl
+				    << "contents:" << std::endl);
+				log_dump(it->second->data().get(), it->second->size());
+			}
+		} else {
+			info("No uploaded files");
+		}
+
+		char ** e = environ;
+		if (*e) {
+			info("Environment");
+			while (*e) {
+				info(*e);
+				e++;
+			}
+		}
 	}
 
 	bool response()
@@ -140,13 +205,17 @@ class JSON_Request: public Fastcgipp::Request<wchar_type>
 			return true;
 		}
 		*/
-		if (session.headers[_S("REQUEST_METHOD")] == _S("POST") && 
-			session.headers[_S("HTTP_ACCEPT")].find(_S("application/json")) != std::basic_string<wchar_type>::npos) {
+		if (session.get.find("debug") != session.get.end()) {
+			debug();
+		}
+		if (session.headers["REQUEST_METHOD"] == "POST" && 
+			session.headers["HTTP_ACCEPT"].find("application/json") != std::string::npos) {
 			return json_response();
 		}
 
-		std::map<basic_string<wchar_type>,basic_string<wchar_type> >::const_iterator filename;
-		if ((filename = session.get.find(_S("file"))) != session.get.end()) {
+		here();
+		Fastcgipp::strmap::const_iterator filename;
+		if ((filename = session.get.find("file")) != session.get.end()) {
 			if (sendfile(filename->second))
 				return true;
 		}
@@ -160,16 +229,18 @@ class JSON_Request: public Fastcgipp::Request<wchar_type>
 
 		// This session data structure is defined in http.hpp
 		out << "<h1>Session Parameters</h1>";
-		for (std::map<std::basic_string<wchar_type>,std::basic_string<wchar_type> >::iterator h=session.headers.begin(); h!=session.headers.end(); h++) {
+		for (Fastcgipp::strmap::iterator h=session.headers.begin(); h!=session.headers.end(); h++) {
 			out << "<b>" << h->first << ":</b> " << h->second << "<br/>" << std::endl;
 		}
 
 		bool multipart = false;
 		basic_string<wchar_type> enc;
-		if (session.get.find(_S("multipart")) != session.get.end()) {
+		basic_string<wchar_type> file_input;
+		if (session.get.find("multipart") != session.get.end()) {
 			here();
 			multipart = true;
-			enc = _S(" enctype='multipart/form-data'");
+			enc = " enctype='multipart/form-data'";
+			file_input = "<div class=\"field-item\">\n<span class=\"label\"><label for=\"id_config_file\">Configuration file</label><div class=\"description\">Upload a saved configuration file.</div></span><span class=\"edit\"><input type=\"file\" name=\"config_file\" id=\"id_config_file\" /></span><span class=\"error\"></span>\n</div>\n";
 		}
 		out << "<form method='post'" << enc << ">" << std::endl
 		    << "<div id=\"network-wan\" class=\"settings\">" << std::endl
@@ -226,46 +297,46 @@ class JSON_Request: public Fastcgipp::Request<wchar_type>
 			<< "	<span class=\"label\"><label for=\"id_pppoe_auto_reconnect\">Auto reconnect</label><div class=\"description\">Automatically re-establish the PPPo_e connection if it is reset for any reason.  This is recommended.</div></span>" << std::endl
 			<< "	<span class=\"edit\"><input type=\"checkbox\" name=\"pppoe_auto_reconnect\" id=\"id_pppoe_auto_reconnect\" /></span><span class=\"error\"></span>" << std::endl
 			<< "</div>" << std::endl
-			<< "" << std::endl
+			<< file_input << std::endl
 			<< "<div class=\"submit\"><input type='submit' value='Save'/></div>" << std::endl
 			<< "</div>" << std::endl
 			<< "</form>" << std::endl;
 
 
 		out << "<h2>request data</h2><br>";
-		for(std::map<basic_string<wchar_type>,basic_string<wchar_type> >::iterator it=session.get.begin(); it!=session.get.end(); ++it) {
+		for(Fastcgipp::strmap::iterator it=session.get.begin(); it!=session.get.end(); ++it) {
 			out << it->first << ": " << it->second << "<br>";
-			if (it->first == _S("multipart")) here();
+			if (it->first == "multipart") here();
 		}
 
 
 		//Fastcgipp::Http::Post is defined in http.hpp
 		out << "<h1>Post Data</h1>";
-		if(session.post.size())
-			for(Fastcgipp::Http::Session<wchar_type>::Posts::iterator it=session.post.begin(); it!=session.post.end(); ++it)
+		if(session.post.size()) {
+			for(Fastcgipp::strmap::iterator it=session.post.begin(); it!=session.post.end(); ++it)
 			{
-				out << "<h2>" << it->first << "</h2>";
-				if(it->second.type==Fastcgipp::Http::Post<wchar_type>::form)
-				{
-					out << "<p><b>Type:</b> form data<br />";
-					out << "<b>Value:</b> " << it->second.value << "</p>";
-				}
-				
-				else
-				{
-					out << "<p><b>Type:</b> file<br />";
-					// When the post type is a file, the filename is stored in Post::value;
-					out << "<b>Filename:</b> " << it->second.value << "<br />";
-					out << "<b>Size:</b> " << it->second.size << "<br />";
-					out << "<b>Data:</b></p><pre>";
-					// We will use dump to send the raw data directly to the client
-					out.dump(it->second.data.get(), it->second.size);
-					out << "</pre>";
-				}
+				out << it->first << ": " << it->second << "<br/>";
 			}
-		else
+		} else {
 			out << "<p>No post data</p>";
-		out << "<br><br>" << std::endl;
+			out << "<br><br>" << std::endl;
+		}
+		out << "<h1>Files</h1>";
+		if(session.files.size()) {
+			for(Fastcgipp::filemap::iterator it=session.files.begin(); it!=session.files.end(); ++it) {
+				// When the post type is a file, the filename is stored in Post::value;
+				out << "<p><b>Filename:</b> " << it->second->name() << "<br />";
+				out << "<p>path:</b> " << it->second->path() << "<br />";
+				out << "<p>mime:</b> " << it->second->mime() << "<br />";
+				out << "<b>Size:</b> " << it->second->size() << "<br />";
+				out << "contents:</p><pre>";
+				out.dump(it->second->data().get(), it->second->size());
+				out << "</pre>";
+			}
+		} else {
+			out << "<p>No uploaded files</p>";
+			out << "<br><br>" << std::endl;
+		}
 
 		char ** e = environ;
 		while (*e) {
@@ -359,6 +430,7 @@ int main(int argc, char **argv, char **env)
 			}
 		}
 	}
+	Fastcgipp::logger::get()->add_target("/tmp/fcgi.log", Fastcgipp::LL_Info);
 
 	struct sockaddr saddr;
 	socklen_t len;
@@ -375,7 +447,7 @@ int main(int argc, char **argv, char **env)
 	}
 	switch (socket_type) {
 		case 0:
-			msg("starting with stdin as socket");
+			info("starting with stdin as socket");
 			break;
 		case 1:
 		{
@@ -448,6 +520,6 @@ int main(int argc, char **argv, char **env)
 	catch(std::exception& e)
 	{
 		// Catch any exception and put them in our errlog file.
-		msg(e.what());
+		error(e.what());
 	}
 }

@@ -24,6 +24,7 @@
 
 #include <string>
 #include <boost/shared_array.hpp>
+#include <boost/shared_ptr.hpp>
 #include <boost/scoped_array.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <ostream>
@@ -38,31 +39,80 @@
 //! Topmost namespace for the fastcgi++ library
 namespace Fastcgipp
 {
+	namespace Http {
+		template<class char_t> class upload_file;
+	}
+	typedef std::map<std::basic_string<char>, std::basic_string<char> > strmap;
+	typedef std::map<std::basic_string<char>, boost::shared_ptr<Http::upload_file<char> > > filemap;
+
 	//! Defines classes and function relating to the http protocol
 	namespace Http
 	{
-		//! Holds a piece of HTTP post data
+		//! Represents an uploaded file
 		/*!
-		 * This structure will hold one of two types of HTTP post data. It can
-		 * either contain form data, in which case the data field is empty and
-		 * the size is zero; or it can hold an uploaded file, in which case data
-		 * contains a pointer to the file data, size contains it's size and value holds it's
-		 * filename. The actual name associated with the piece of post data
-		 * is omitted from the class so it can be linked in an associative
-		 * container.
+		 * When a file is uploaded, it will be written to disk and saved
+		 * as an upload_file object.  This object will be reference counted
+		 * and be deleted when the count goes to zero.  If save is called on
+		 * a temporary file, it is no longer a temporary file and will not be
+		 * deleted by the destructor.
 		 *
 		 * @tparam char_t Type of character to use in the value string (char or wchar_t)
 		 */
-		template<class char_t> struct Post
+		template<class char_t> class upload_file
 		{
-			//! Type of POST data piece
-			enum Type { file, form } type;
-			//! Value of POST data if type=form or the filename if type=file
-			std::basic_string<char_t> value;
-			//! Pointer to file data
-			boost::shared_array<char> data;
-			//! Size of data in bytes pointed to by data.
-			size_t size;
+			public:
+				typedef boost::shared_ptr<upload_file<char_t> > ptr;
+			public:
+				~upload_file() {
+					if (_is_temp) {
+						unlink(_path.c_str());
+					}
+				}
+				static ptr create(const std::basic_string<char_t>& name,
+				                  const std::basic_string<char_t>& mime,
+				                  boost::shared_array<char> data, size_t size) {
+					ptr ret(new upload_file(name, mime, data, size));
+					return ret;
+				}
+				bool save(const std::basic_string<char_t>& path) {
+					if (rename(_path.c_str(), path.c_str()) == 0) {
+						_is_temp = false;
+						_path = path;
+						_name = path.substr(path.find_last_of('/')+1);
+						return true;
+					}
+					return false;
+				}
+				const std::basic_string<char_t>& name() const { return _name; }
+				const std::basic_string<char_t>& path() const { return _path; }
+				const std::basic_string<char_t>& mime() const { return _mime; }
+				size_t size() const { return _size; }
+				bool is_temp() const {return _is_temp; }
+				const boost::shared_array<char> data() const { return _data; }
+			protected:
+				upload_file(const std::basic_string<char_t>& name,
+				            const std::basic_string<char_t>& mime,
+				            boost::shared_array<char> data, size_t size)
+						: _name(name), _mime(mime), _size(size), _is_temp(true), _data(data) {
+					// create a temporary file
+					char temp[512];
+					strcpy(temp, "/tmp/upload.XXXXXX");
+					int fd = mkstemp(temp);
+					if (fd != -1) {
+						if (write(fd, data.get(), size) != size) {
+							// throw something
+						}
+						close(fd);
+						_path = temp;
+					}
+				}
+			protected:
+				std::basic_string<char_t> _name;
+				std::basic_string<char_t> _path;
+				std::basic_string<char_t> _mime;
+				boost::shared_array<char> _data;
+				size_t _size;
+				bool _is_temp;
 		};
 
 		//! Efficiently stores IPv4 addresses
@@ -212,18 +262,19 @@ namespace Fastcgipp
 			uint16_t remote_port;
 			//! Timestamp the client has for this document
 			boost::posix_time::ptime if_modified_since;
-			typedef std::map<std::basic_string<char_t>, std::basic_string<char_t> > strmap;
 			strmap headers;
 
 			//typedef std::map<std::basic_string<char_t>, std::basic_string<char_t> > Other_data;
 			//Other_data other_data;
 
-			typedef std::map<std::basic_string<char_t>, Post<char_t> > Posts;
-			//! STL container associating POST objects with their name
-			Posts post;
-			//! STL container associating GET objects with their name
+			//! STL container associating POST strings with their name
+			strmap post;
+			//! STL container associating GET strings with their name
 			strmap get;
+			//! STL container associating COOKIE strings with their name
 			strmap cookie;
+			//! STL container associating FILES with their name
+			filemap files;
 
 			//! Parses Fast_cGI parameter data into the data structure
 			/*!

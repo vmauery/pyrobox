@@ -19,6 +19,7 @@ table.deny-dhcp {
 <script type="text/javascript" src="/js/pyrobox.js"></script>
 
 <script type="text/javascript">
+function something_naughty() {return false;}
 (function($) {$(function() {
 function promote_row(obj) {
 	var $row = $(obj).parent().parent();
@@ -69,7 +70,7 @@ function draw_static_lease(lease) {
 	return "<tr id='row_"+lease.id+"' class='edit'>\n<td id='row_"+lease.id+"-mac_addr'>"+lease.mac_addr+"</td><td id='row_"+lease.id+"-ip_addr'>"+lease.ip_addr+"</td><td id='row_"+lease.id+"-hostname'>"+lease.hostname+"</td>\n<td><a id='edit_"+lease.id+"_static' class='jslink delete'>delete</a> <a id='delete_"+lease.id+"_static'  class='jslink edit'>edit</a></td></tr>";
 }
 function redraw_static_leases() {
-	table = "";
+	var table = "";
 	$.each(static_leases, function(i, item) {
 		table += draw_static_lease(item);
 	});
@@ -77,18 +78,28 @@ function redraw_static_leases() {
 	js_links_local();
 }
 function fetch_static_leases() {
-	url = "/config/?json";
-	$.postJSON(url, {q:"static leases"}, function(data) {
+	url = "/config/?json&debug";
+	$.postJSON(url, {entries:"static_dhcp"}, function(data) {
 		//alert(data);
-		static_leases = data;
+		static_leases = data.static_dhcp;
 		redraw_static_leases();
 		$(".tablesorter").trigger("update");
 	});
 }
 
-fetch_static_leases();
+//fetch_static_leases();
 
 $(".tablesorter").tablesorter();
+
+url = "/config/?json&debug";
+$.postJSON(url, {entries:"static_dhcp", form: "dhcp-settings"}, function(data) {
+		var rform = $.render_form(data.form);
+		$('#dhcp-settings-form').html(rform);
+		static_leases = data.static_dhcp;
+		redraw_static_leases();
+		$(".tablesorter").trigger("update");
+
+});
 
 }); })(jQuery);
 </script>
@@ -155,14 +166,10 @@ $(".tablesorter").tablesorter();
 
 
 <h1>DHCP</h1>
-<table class="tablesorter" id="dhcp-settings-form">
-<thead>
-</thead>
-<tbody>
-</tbody>
-</table>
+<div id="dhcp-settings-form">
+</div>
 
-<a name='dhcp_header'><h2>Static DHCP Entries</h2></a>
+<h2>Static DHCP Entries</h2>
 <table class="tablesorter" id="static-dhcp-form">
 <thead><tr><th>Mac Address</th><th>IP Address</th><th>Hostname</th><th>Actions</th></tr></thead>
 <tbody>
