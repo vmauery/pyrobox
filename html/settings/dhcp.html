@@ -71,7 +71,7 @@ function draw_static_lease(lease) {
 }
 function redraw_static_leases() {
 	var table = "";
-	$.each(static_leases, function(item) {
+	$.each(static_leases, function(i, item) {
 		table += draw_static_lease(item);
 	});
 	$("#static-dhcp-form > tbody").html(table);
