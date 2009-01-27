@@ -23,3 +23,31 @@ vector<string> explode(const string& delimiter, const string& str) {
 	return ret;
 }
 
+string html_entities(const string& encode) {
+	string out;
+	size_t len = encode.length();
+	string::const_iterator i;
+	for (i = encode.begin(); i!=encode.end(); i++) {
+		switch (*i) {
+		case '&':
+			out.append("&amp;");
+			break;
+		case '<':
+			out.append("&lt;");
+			break;
+		case '>':
+			out.append("&gt;");
+			break;
+		case '\'':
+			out.append("&#039;");
+			break;
+		case '"':
+			out.append("&quot;");
+			break;
+		default:
+			out.push_back(*i);
+			break;
+		}
+	}
+	return out;
+}

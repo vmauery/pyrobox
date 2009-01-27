@@ -22,6 +22,8 @@ static inline std::string check_url(std::string url) {
 	return url;
 }
 
+std::string html_entities(const std::string& encode);
+
 static inline void lower_case(std::string &s) {
 	transform(s.begin(), s.end(), s.begin(), (int(*)(int))tolower);
 }

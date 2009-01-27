@@ -205,14 +205,32 @@ class JSON_Request: public Fastcgipp::Request<char>
 		out << "Content-Type: text/html\r\n\r\n";
 
 		// Now it's all stuff you should be familiar with
-		out << "<html><head><meta http-equiv='Content-Type' content='text/html' />";
-		out << "<title>Test page</title></head><body>";
+		out << "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n<html xmlns=\"http://www.w3.org/1999/xhtml\"><head><style type=\"text/css\" media=\"all\">@import \"/theme/flames/style.css\";</style><meta http-equiv='Content-Type' content='text/html' />" << std::endl
+			<< "<title>Test page</title></head><body class=\"sidebar-left\">" << std::endl
+			<< "<div id=\"header-region\" class=\"clear-block\"></div>" << std::endl
+			<< "<div id=\"wrapper\">" << std::endl
+			<< "\t<div id=\"container\" class=\"clear-block\">" << std::endl
+			<< "\t\t<div id=\"header\">" << std::endl
+			<< "\t\t\t<div id=\"logo-floater\"><h1><a href=\"/\"><img src=\"/theme/flames/images/logo.png\" alt=\"\" title=\"\"  /><span>.-~::PyroBox::~-.</span></a></h1></div>" << std::endl
+			<< "\t\t\t<ul class=\"links primary-links\">" << std::endl
+			<< "\t\t\t\t<li><a href=\"/settings\" class=\"active\">Settings</a></li>" << std::endl
+			<< "\t\t\t\t<li><a href=\"/firewall\" class=\"\">Firewall</a></li>" << std::endl
+			<< "\t\t\t\t<li><a href=\"/\" class=\"\">Information</a></li>" << std::endl
+			<< "\t\t\t\t<li><a href=\"/network\" class=\"\">Network</a></li>" << std::endl
+			<< "\t\t\t</ul>" << std::endl
+			<< "\t\t\t<ul class=\"links secondary-links\">" << std::endl
+			<< "\t\t\t\t<li><a href=\"/settings/dhcp\" class=\"active\">DHCP</a></li>" << std::endl
+			<< "\t\t\t\t<li><a href=\"/settings/dns\" class=\"\">DNS</a></li>" << std::endl
+			<< "\t\t\t\t<li><a href=\"/settings/captive\" class=\"\">Captive Portal</a></li>" << std::endl
+			<< "\t\t\t</ul>" << std::endl
+			<< "\t\t</div><!-- /header -->" << std::endl
+			<< "\t\t<div id=\"sidebar-left\" class=\"sidebar\">" << std::endl
+			<< "\t\t</div>" << std::endl
+			<< "\t\t<div id=\"center\"><div id=\"squeeze\"><div class=\"right-corner\"><div class=\"left-corner\">" << std::endl
+			<< "<div class=\"breadcrumb\"><a href=\"/\">Home</a> &raquo; <a href=\"/settings\">Settings</a> &raquo; <a href=\"/settings/dhcp\">DHCP</a></div>" << std::endl
+			<< "\t\t<div id=\"blocks-pre\"></div>" << std::endl
+			<< "<div id=\"content\">" << std::endl;
 
-		// This session data structure is defined in http.hpp
-		out << "<h1>Session Parameters</h1>";
-		for (Fastcgipp::strmap::iterator h=session.headers.begin(); h!=session.headers.end(); h++) {
-			out << "<b>" << h->first << ":</b> " << h->second << "<br/>" << std::endl;
-		}
 
 		bool multipart = false;
 		basic_string<wchar_type> enc;
@@ -221,12 +239,12 @@ class JSON_Request: public Fastcgipp::Request<char>
 			here();
 			multipart = true;
 			enc = " enctype='multipart/form-data'";
-			file_input = "<div class=\"field-item\">\n<span class=\"label\"><label for=\"id_config_file\">Configuration file</label><div class=\"description\">Upload a saved configuration file.</div></span><span class=\"edit\"><input type=\"file\" name=\"config_file\" id=\"id_config_file\" /></span><span class=\"error\"></span>\n</div>\n";
+			file_input = "<div class=\"field-item\">\n<div class=\"label\"><label for=\"id_config_file\">Configuration file</label><div class=\"description\">Upload a saved configuration file.</div></div><span class=\"edit\"><input type=\"file\" name=\"config_file\" id=\"id_config_file\" /></span><span class=\"error\"></span>\n</div>\n";
 		}
-		out << "<form method='post'" << enc << ">" << std::endl
+		out << "<form method='post' action='' " << enc << ">" << std::endl
 		    << "<div id=\"network-wan\" class=\"settings\">" << std::endl
 			<< "<div class=\"field-item\">" << std::endl
-			<< "	<span class=\"label\"><label for=\"id_wan_address_method\">WAN address method</label><div class=\"description\">Choose the address method provided by your ISP.  Most common would be DHCP and then PPPo_e.  Very few ISPs use static addresses.</div></span>" << std::endl
+			<< "	<div class=\"label\"><label for=\"id_wan_address_method\">WAN address method</label><div class=\"description\">Choose the address method provided by your ISP.  Most common would be DHCP and then PPPo_e.  Very few ISPs use static addresses.</div></div>" << std::endl
 			<< "" << std::endl
 			<< "	<span class=\"edit\"><select name=\"wan_address_method\" id=\"id_wan_address_method\">" << std::endl
 			<< "<option value=\"dhcp\">Dynamic IP Address</option>" << std::endl
@@ -235,47 +253,47 @@ class JSON_Request: public Fastcgipp::Request<char>
 			<< "</select></span><span class=\"error\"></span>" << std::endl
 			<< "</div>" << std::endl
 			<< "<div class=\"field-item\">" << std::endl
-			<< "	<span class=\"label\"><label for=\"id_pppoe_username\">Username</label><div class=\"description\">Some ISPs require a username and password when connecting to their PPPo_e service.  If you were supplied with a username and password, enter them here.</div></span>" << std::endl
+			<< "	<div class=\"label\"><label for=\"id_pppoe_username\">Username</label><div class=\"description\">Some ISPs require a username and password when connecting to their PPPo_e service.  If you were supplied with a username and password, enter them here.</div></div>" << std::endl
 			<< "	<span class=\"edit\"><input type=\"text\" name=\"pppoe_username\" value=\"mauery\" id=\"id_pppoe_username\" /></span><span class=\"error\"></span>" << std::endl
 			<< "" << std::endl
 			<< "</div>" << std::endl
 			<< "<div class=\"field-item\">" << std::endl
-			<< "	<span class=\"label\"><label for=\"id_pppoe_password\">Password</label><div class=\"description\">If this field is blank, that means no password is set.  If it is filled with '*', that means there is a password set. Be sure to enter the same password in both password fields.</div></span>" << std::endl
+			<< "	<div class=\"label\"><label for=\"id_pppoe_password\">Password</label><div class=\"description\">If this field is blank, that means no password is set.  If it is filled with '*', that means there is a password set. Be sure to enter the same password in both password fields.</div></div>" << std::endl
 			<< "	<span class=\"edit\"><input type=\"password\" name=\"pppoe_password\" value=\"************\" id=\"id_pppoe_password\" /></span><span class=\"error\"></span>" << std::endl
 			<< "</div>" << std::endl
 			<< "<div class=\"field-item\">" << std::endl
-			<< "	<span class=\"label\"><label for=\"id_pppoe_confirm_password\">Confirm password</label></span>" << std::endl
+			<< "	<div class=\"label\"><label for=\"id_pppoe_confirm_password\">Confirm password</label></div>" << std::endl
 			<< "	<span class=\"edit\"><input type=\"password\" name=\"pppoe_confirm_password\" value=\"************\" id=\"id_pppoe_confirm_password\" /></span><span class=\"error\"></span>" << std::endl
 			<< "</div>" << std::endl
 			<< "<div class=\"field-item\">" << std::endl
 			<< "" << std::endl
-			<< "	<span class=\"label\"><label for=\"id_pppoe_service_name\">Service name</label><div class=\"description\">Some ISPs require you to enter a service name.  If you were not suplied with one, leave this field blank.</div></span>" << std::endl
+			<< "	<div class=\"label\"><label for=\"id_pppoe_service_name\">Service name</label><div class=\"description\">Some ISPs require you to enter a service name.  If you were not suplied with one, leave this field blank.</div></div>" << std::endl
 			<< "	<span class=\"edit\"><input type=\"text\" name=\"pppoe_service_name\" value=\"verizon\" id=\"id_pppoe_service_name\" /></span><span class=\"error\"></span>" << std::endl
 			<< "</div>" << std::endl
 			<< "<div class=\"field-item\">" << std::endl
-			<< "	<span class=\"label\"><label for=\"id_pppoe_ip\">Static IP address</label><div class=\"description\">If you were assigned a static IP address for your connection,  you may enter it here. (This is not common.)</div></span>" << std::endl
+			<< "	<div class=\"label\"><label for=\"id_pppoe_ip\">Static IP address</label><div class=\"description\">If you were assigned a static IP address for your connection,  you may enter it here. (This is not common.)</div></div>" << std::endl
 			<< "	<span class=\"edit\"><input type=\"text\" name=\"pppoe_ip\" value=\"12.3.3.4\" id=\"id_pppoe_ip\" /></span><span class=\"error\"></span>" << std::endl
 			<< "</div>" << std::endl
 			<< "<div class=\"field-item\">" << std::endl
-			<< "	<span class=\"label\"><label for=\"id_pppoe_mac_addr\">Custom MAC address</label><div class=\"description\">In some cases it is desirable or necessary to change the MAC address of the external network interface.  For most users, simply leave this field blank to use the default hardware MAC address.  MAC address format is '00:12:34:56:ac:df' or '00-12-34-56-ac-df'.</div></span>" << std::endl
+			<< "	<div class=\"label\"><label for=\"id_pppoe_mac_addr\">Custom MAC address</label><div class=\"description\">In some cases it is desirable or necessary to change the MAC address of the external network interface.  For most users, simply leave this field blank to use the default hardware MAC address.  MAC address format is '00:12:34:56:ac:df' or '00-12-34-56-ac-df'.</div></div>" << std::endl
 			<< "" << std::endl
 			<< "	<span class=\"edit\"><input type=\"text\" name=\"pppoe_mac_addr\" value=\"00:33:32:af:de:46\" id=\"id_pppoe_mac_addr\" /></span><span class=\"error\"></span>" << std::endl
 			<< "</div>" << std::endl
 			<< "<div class=\"field-item\">" << std::endl
-			<< "	<span class=\"label\"><label for=\"id_pppoe_dns_1\">Primary DNS server</label><div class=\"description\">Enter the IP address of the nameservers as provided by your ISP.  If you are running the DNS service on the local machine, this field will be ignored.</div></span>" << std::endl
+			<< "	<div class=\"label\"><label for=\"id_pppoe_dns_1\">Primary DNS server</label><div class=\"description\">Enter the IP address of the nameservers as provided by your ISP.  If you are running the DNS service on the local machine, this field will be ignored.</div></div>" << std::endl
 			<< "	<span class=\"edit\"><input type=\"text\" name=\"pppoe_dns_1\" value=\"12.3.4.3\" id=\"id_pppoe_dns_1\" /></span><span class=\"error\"></span>" << std::endl
 			<< "</div>" << std::endl
 			<< "<div class=\"field-item\">" << std::endl
-			<< "	<span class=\"label\"><label for=\"id_pppoe_dns_2\">Secondary DNS server</label></span>" << std::endl
+			<< "	<div class=\"label\"><label for=\"id_pppoe_dns_2\">Secondary DNS server</label></div>" << std::endl
 			<< "	<span class=\"edit\"><input type=\"text\" name=\"pppoe_dns_2\" value=\"12.3.3.3\" id=\"id_pppoe_dns_2\" /></span><span class=\"error\"></span>" << std::endl
 			<< "" << std::endl
 			<< "</div>" << std::endl
 			<< "<div class=\"field-item\">" << std::endl
-			<< "	<span class=\"label\"><label for=\"id_pppoe_mtu\">Network MTU</label><div class=\"description\">Unless you know what this is or are otherwise instructed to change it, leave it at the default value.</div></span>" << std::endl
+			<< "	<div class=\"label\"><label for=\"id_pppoe_mtu\">Network MTU</label><div class=\"description\">Unless you know what this is or are otherwise instructed to change it, leave it at the default value.</div></div>" << std::endl
 			<< "	<span class=\"edit\"><input type=\"text\" name=\"pppoe_mtu\" value=\"1492\" id=\"id_pppoe_mtu\" /></span><span class=\"error\"></span>" << std::endl
 			<< "</div>" << std::endl
 			<< "<div class=\"field-item\">" << std::endl
-			<< "	<span class=\"label\"><label for=\"id_pppoe_auto_reconnect\">Auto reconnect</label><div class=\"description\">Automatically re-establish the PPPo_e connection if it is reset for any reason.  This is recommended.</div></span>" << std::endl
+			<< "	<div class=\"label\"><label for=\"id_pppoe_auto_reconnect\">Auto reconnect</label><div class=\"description\">Automatically re-establish the PPPo_e connection if it is reset for any reason.  This is recommended.</div></div>" << std::endl
 			<< "	<span class=\"edit\"><input type=\"checkbox\" name=\"pppoe_auto_reconnect\" id=\"id_pppoe_auto_reconnect\" /></span><span class=\"error\"></span>" << std::endl
 			<< "</div>" << std::endl
 			<< file_input << std::endl
@@ -284,10 +302,15 @@ class JSON_Request: public Fastcgipp::Request<char>
 			<< "</form>" << std::endl;
 
 
-		out << "<h2>request data</h2><br>";
+		// This session data structure is defined in http.hpp
+		out << "<h1>Session Parameters</h1>";
+		for (Fastcgipp::strmap::iterator h=session.headers.begin(); h!=session.headers.end(); h++) {
+			out << "<b>" << h->first << ":</b> " << html_entities(h->second) << "<br/>" << std::endl;
+		}
+
+		out << "<h1>request data</h1>";
 		for(Fastcgipp::strmap::iterator it=session.get.begin(); it!=session.get.end(); ++it) {
-			out << it->first << ": " << it->second << "<br>";
-			if (it->first == "multipart") here();
+			out << it->first << ": " << html_entities(it->second) << "<br/>";
 		}
 
 
@@ -296,11 +319,11 @@ class JSON_Request: public Fastcgipp::Request<char>
 		if(session.post.size()) {
 			for(Fastcgipp::strmap::iterator it=session.post.begin(); it!=session.post.end(); ++it)
 			{
-				out << it->first << ": " << it->second << "<br/>";
+				out << it->first << ": " << html_entities(it->second) << "<br/>";
 			}
 		} else {
 			out << "<p>No post data</p>";
-			out << "<br><br>" << std::endl;
+			out << "<br/>" << std::endl;
 		}
 		out << "<h1>Files</h1>";
 		if(session.files.size()) {
@@ -316,29 +339,30 @@ class JSON_Request: public Fastcgipp::Request<char>
 			}
 		} else {
 			out << "<p>No uploaded files</p>";
-			out << "<br><br>" << std::endl;
+			out << "<br/><br/>" << std::endl;
 		}
 
 		char ** e = environ;
+		if (*e)
+			out << "<h1>Environ</h1>";
 		while (*e) {
-			out << *e << "<br>" << std::endl;
+			out << *e << "<br/>" << std::endl;
 			e++;
 		}
 
-		out << "</body></html>";
+		out << "</div></div></div></div></div></div></div></body></html>";
 		return true;
 	}
 
 	bool response()
 	{
-		/*
 		if (session.server_port == 80) {
 			// redirect to ssl
-			string url = string("https://") + session.host + session.script_name + "/?" + session.query_string;
+			std::string url = std::string("https://") + session.host + session.script_name + "/?" + session.query_string;
+			out << "Status: 301 Moved Permanently\r\n";
 			out << "Location: " << url << "\r\n\r\n";
 			return true;
 		}
-		*/
 		if (session.get.find("debug") != session.get.end()) {
 			debug();
 		}

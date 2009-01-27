@@ -259,7 +259,7 @@ var url = document.location + ""; url = url.replace(/http(s)?:\/\/[^\/]+/, '');
 		var attributes = ["maxlength", ];
 		element_common(el, attributes);
 		return '<div class="field-item">\n'+
-			'\t<span class="label"><label for="'+el.id+'">'+el.label+'</label><div class="description">'+el.description+'</div></span>\n'+
+			'\t<div class="label"><label for="'+el.id+'">'+el.label+'</label><div class="description">'+el.description+'</div></div>\n'+
 
 			'\t<span class="edit"><input name="'+el.name+'" id="'+el.id+'" type="text" value="'+el.value+'" '+render_attributes(el)+'/></span><span class="error"></span>\n</div>';
 	};
@@ -268,7 +268,7 @@ var url = document.location + ""; url = url.replace(/http(s)?:\/\/[^\/]+/, '');
 		var attributes = ["rows", "cols", ];
 		element_common(el, attributes);
 		return '<div class="field-item">\n'+
-			'\t<span class="label"><label for="'+el.id+'">'+el.label+'</label><div class="description">'+el.description+'</div></span>\n'+
+			'\t<div class="label"><label for="'+el.id+'">'+el.label+'</label><div class="description">'+el.description+'</div></div>\n'+
 
 			'\t<span class="edit"><textarea name="'+el.name+'" id="'+el.id+'" '+render_attributes(el)+'>'+el.value+'</textarea></span><span class="error"></span>\n</div>';
 	};
@@ -277,7 +277,7 @@ var url = document.location + ""; url = url.replace(/http(s)?:\/\/[^\/]+/, '');
 		var attributes = ["maxlength", ];
 		element_common(el, attributes);
 		return '<div class="field-item">\n'+
-			'\t<span class="label"><label for="'+el.id+'">'+el.label+'</label><div class="description">'+el.description+'</div></span>\n'+
+			'\t<div class="label"><label for="'+el.id+'">'+el.label+'</label><div class="description">'+el.description+'</div></div>\n'+
 
 			'\t<span class="edit"><input name="'+el.name+'" id="'+el.id+'" type="'+el.type+'" value="'+el.value+'" '+render_attributes(el)+'/></span><span class="error"></span>\n</div>';
 	};
@@ -286,7 +286,7 @@ var url = document.location + ""; url = url.replace(/http(s)?:\/\/[^\/]+/, '');
 		var attributes = [];
 		element_common(el, attributes);
 		return '<div class="field-item">\n'+
-			'\t<span class="label"><label for="'+el.id+'">'+el.label+'</label><div class="description">'+el.description+'</div></span>\n'+
+			'\t<div class="label"><label for="'+el.id+'">'+el.label+'</label><div class="description">'+el.description+'</div></div>\n'+
 			'\t<span class="edit"><input type="checkbox" name="'+el.name+'" id="'+el.id+'" value="'+el.value+'" '+render_attributes(el)+'/></span><span class="error"></span>\n</div>\n';
 	};
 
@@ -307,7 +307,7 @@ var url = document.location + ""; url = url.replace(/http(s)?:\/\/[^\/]+/, '');
 		var attributes = [];
 		element_common(el, attributes);
 		return '<div class="field-item">\n'+
-			'<span class="label"><label for="'+el.id+'">'+el.label+'</label><div class="description">'+el.description+'</div></span>\n'+
+			'<div class="label"><label for="'+el.id+'">'+el.label+'</label><div class="description">'+el.description+'</div></div>\n'+
 			'<span class="edit"><ul>\n'+
 			render_radio_options(el) +
 			'</ul></span><span class="error"></span>\n</div>';
@@ -327,7 +327,7 @@ var url = document.location + ""; url = url.replace(/http(s)?:\/\/[^\/]+/, '');
 		var attributes = [];
 		element_common(el, attributes);
 		return '<div class="field-item">\n'+
-			'<span class="label"><label for="'+el.id+'">'+el.label+'</label><div class="description">'+el.description+'</div></span>\n'+
+			'<div class="label"><label for="'+el.id+'">'+el.label+'</label><div class="description">'+el.description+'</div></div>\n'+
 			'<select name="'+el.name+'">\n'+
 			render_select_options(el) +
 			'</select><span class="error"></span>\n</div>';
@@ -337,7 +337,7 @@ var url = document.location + ""; url = url.replace(/http(s)?:\/\/[^\/]+/, '');
 		var attributes = [];
 		element_common(el, attributes);
 		return '<div class="field-item">\n'+
-			'<span class="label"><label for="'+el.id+'">'+el.label+'</label><div class="description">'+el.description+'</div></span>\n'+
+			'<div class="label"><label for="'+el.id+'">'+el.label+'</label><div class="description">'+el.description+'</div></div>\n'+
 			'<span class="edit"><ul>\n'+
 			render_select_options(el) +
 			'</ul></span><span class="error"></span>\n</div>';
@@ -355,7 +355,7 @@ var url = document.location + ""; url = url.replace(/http(s)?:\/\/[^\/]+/, '');
 		var attributes = [];
 		element_common(el, attributes);
 		return '<div class="field-item">\n'+
-			'\t<span class="label"><label for="'+el.id+'">'+el.label+'</label><div class="description">'+el.description+'</div></span>\n'+
+			'\t<div class="label"><label for="'+el.id+'">'+el.label+'</label><div class="description">'+el.description+'</div></div>\n'+
 
 			'\t<span class="edit"><input name="'+el.name+'" id="'+el.id+'" type="'+el.type+'" '+render_attributes(el)+'/></span><span class="error"></span>\n</div>';
 	};
