@@ -91,7 +91,21 @@ std::string static_dhcp::json() {
 /////////////////////////////////////////////////////////////////////////
 const std::string variable::_table_name = "app_variable";
 
-model_all(variable)
+std::list<model::ptr> variable::all(const std::string& form) {
+	variable v;
+	std::list<model::ptr> ret;
+	db::Results::iterator i;
+	db::Results results;
+	char sql[128];
+	sprintf(sql, "select * from %s where form='%s'",
+		v.table_name().c_str(), form.c_str());
+	v._db->execute(sql, results);
+	for (i=results.begin(); i!=results.end(); i++) {
+		model::ptr r(new variable(*i));
+		ret.push_back(r);
+	}
+	return ret;
+}
 
 std::string variable::json() {
 	std::stringstream ss;

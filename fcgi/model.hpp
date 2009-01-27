@@ -72,7 +72,7 @@ class variable : public model {
 		variable(int i) : model(i) {}
 		variable(db::Result& vals) : model(vals) {}
 		virtual ~variable() {}
-		static std::list<model::ptr> all();
+		static std::list<model::ptr> all(const std::string& form_name);
 
 	protected:
 		virtual const std::string& table_name() { return _table_name; }
@@ -83,6 +83,8 @@ class variable : public model {
 	// variable access interface
 	public:
 		virtual std::string json();
+		std::string& form() { return values["form"]; }
+		void form(std::string& value) { values["form"] = value; }
 		std::string& name() { return values["name"]; }
 		void name(std::string& value) { values["name"] = value; }
 		std::string& value() { return values["value"]; }

@@ -55,7 +55,7 @@ using std::basic_string;
 
 class JSON_Request: public Fastcgipp::Request<char>
 {
-	std::stringstream& model_all(std::stringstream& ss, const std::string& type) {
+	std::stringstream& db_entries(std::stringstream& ss, const std::string& type) {
 		here();
 		std::list<model::ptr>::iterator rowiter;
 		std::list<model::ptr> models = model::fetch_all(type);
@@ -70,26 +70,31 @@ class JSON_Request: public Fastcgipp::Request<char>
 		return ss;
 	}
 
-	std::stringstream& db_entries(std::stringstream& ss) {
+	std::stringstream& form_values(std::stringstream& ss, const std::string& form_name) {
 		here();
-		std::vector<std::string> models = explode(",", session.post["entries"]);
-		foreach(std::vector<std::string>, models, i) {
-			model_all(ss, *i);
+		std::list<model::ptr>::iterator rowiter;
+		std::list<model::ptr> models = variable::all(form_name);
+		ss << "values: [\n";
+		for (rowiter=models.begin(); rowiter!=models.end(); ) {
+			ss << (*rowiter)->json();
+			if (++rowiter != models.end()) {
+				ss << ",\n";
+			}
 		}
+		ss << "\n],\n";
 		return ss;
 	}
 
-	std::stringstream& form_response(std::stringstream& ss) {
+	std::stringstream& form_response(std::stringstream& ss, const std::string& form_name) {
 		here();
 		// build the form
 		std::string form_file_name = "js/json/forms/";
-		std::string form_name = session.post["form"];
 		form_file_name += form_name;
 		std::ifstream form_file;
 		form_file.open(form_file_name.c_str(), std::ios::binary);
 		if (form_file) {
 		here();
-			ss << "form: ";
+			ss << form_name << ": { form: ";
 			int bytes_read;
 			form_file.seekg (0, std::ios::end);
 			bytes_read = form_file.tellg();
@@ -100,12 +105,11 @@ class JSON_Request: public Fastcgipp::Request<char>
 			ss.write(buf, bytes_read);
 			form_file.close();
 			delete[] buf;
-			ss << ",";
-			//std::list<form_values> = form_values::fetch(form_name);
+
+			ss << "}, ";
+			form_values(ss, form_name);
 			// verify input data
 			// send the form (with return code/error info)
-			ss << "form_values: {}";
-			ss << ",\n";
 		} else {
 		here();
 			ss << "form: {},\n";
@@ -119,15 +123,16 @@ class JSON_Request: public Fastcgipp::Request<char>
 		std::string response;
 		ss << "{\n";
 		// handle requests
-			for(Fastcgipp::strmap::iterator it=session.post.begin(); it!=session.post.end(); ++it)
-			{
-				info(it->first << ": " << it->second);
-			}
-		if (session.post.find("form") != session.post.end()) {
-			form_response(ss);
+		for(Fastcgipp::strmap::iterator it=session.post.begin(); it!=session.post.end(); ++it)
+		{
+			info(it->first << ": " << it->second);
 		}
-		if (session.post.find("entries") != session.post.end()) {
-			db_entries(ss);
+		foreach(Fastcgipp::strmap, session.post, post) {
+			if (post->second == "form") {
+				form_response(ss, post->first);
+			} else if (post->second == "records") {
+				db_entries(ss, post->first);
+			}
 		}
 		
 		ss << "}";
@@ -195,31 +200,7 @@ class JSON_Request: public Fastcgipp::Request<char>
 		}
 	}
 
-	bool response()
-	{
-		/*
-		if (session.server_port == 80) {
-			// redirect to ssl
-			string url = string("https://") + session.host + session.script_name + "/?" + session.query_string;
-			out << "Location: " << url << "\r\n\r\n";
-			return true;
-		}
-		*/
-		if (session.get.find("debug") != session.get.end()) {
-			debug();
-		}
-		if (session.headers["REQUEST_METHOD"] == "POST" && 
-			session.headers["HTTP_ACCEPT"].find("application/json") != std::string::npos) {
-			return json_response();
-		}
-
-		here();
-		Fastcgipp::strmap::const_iterator filename;
-		if ((filename = session.get.find("file")) != session.get.end()) {
-			if (sendfile(filename->second))
-				return true;
-		}
-
+	bool test_page() {
 		// must be terminated with \r\n\r\n. NOT just \n\n.
 		out << "Content-Type: text/html\r\n\r\n";
 
@@ -345,13 +326,46 @@ class JSON_Request: public Fastcgipp::Request<char>
 		}
 
 		out << "</body></html>";
+		return true;
+	}
 
-		// Always return true if you are done. This will let apache know we are done
-		// and the manager will destroy the request and free it's resources.
-		// Return false if you are not finished but want to relinquish control and
-		// allow other requests to operate. You might do this after an SQL query
-		// while waiting for a reply. Passing messages to requests through the
-		// manager is possible but beyond the scope of this example.
+	bool response()
+	{
+		/*
+		if (session.server_port == 80) {
+			// redirect to ssl
+			string url = string("https://") + session.host + session.script_name + "/?" + session.query_string;
+			out << "Location: " << url << "\r\n\r\n";
+			return true;
+		}
+		*/
+		if (session.get.find("debug") != session.get.end()) {
+			debug();
+		}
+		if (session.headers["REQUEST_METHOD"] == "POST" && 
+			session.headers["HTTP_ACCEPT"].find("application/json") != std::string::npos) {
+			return json_response();
+		}
+
+		here();
+		Fastcgipp::strmap::const_iterator filename;
+		if ((filename = session.get.find("file")) != session.get.end()) {
+			if (sendfile(filename->second))
+				return true;
+		}
+		
+		
+		if (session.get.find("test") != session.get.end()) {
+			return test_page();
+		}
+
+		out << "Status: 404 Not Found\r\n";
+		out << "Content-Type: text/html\r\n\r\n";
+		out << "<html><head><title>Pyrobox FastCGI server / Page Not Found</title></head>" << std::endl;
+		out << "<body>Could not find requested page<br/>" << std::endl;
+		out << "try ?test&amp;multipart&amp;debug" << std::endl;
+		out << "</body></html>" << std::endl;
+
 		return true;
 	}
 

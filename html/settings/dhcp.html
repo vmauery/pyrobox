@@ -71,7 +71,7 @@ function draw_static_lease(lease) {
 }
 function redraw_static_leases() {
 	var table = "";
-	$.each(static_leases, function(i, item) {
+	$.each(static_leases, function(item) {
 		table += draw_static_lease(item);
 	});
 	$("#static-dhcp-form > tbody").html(table);
@@ -79,7 +79,7 @@ function redraw_static_leases() {
 }
 function fetch_static_leases() {
 	url = "/config/?json&debug";
-	$.postJSON(url, {entries:"static_dhcp"}, function(data) {
+	$.postJSON(url, {static_dhcp: "records"}, function(data) {
 		//alert(data);
 		static_leases = data.static_dhcp;
 		redraw_static_leases();
@@ -92,8 +92,8 @@ function fetch_static_leases() {
 $(".tablesorter").tablesorter();
 
 url = "/config/?json&debug";
-$.postJSON(url, {entries:"static_dhcp", form: "dhcp-settings"}, function(data) {
-		var rform = $.render_form(data.form);
+$.postJSON(url, {static_dhcp: "records", dhcp_settings: "form"}, function(data) {
+		var rform = $.render_form(data.dhcp_settings.form, data.dhcp_settings.values);
 		$('#dhcp-settings-form').html(rform);
 		static_leases = data.static_dhcp;
 		redraw_static_leases();
