@@ -88,7 +88,7 @@ class JSON_Request: public Fastcgipp::Request<char>
 	std::stringstream& form_response(std::stringstream& ss, const std::string& form_name) {
 		here();
 		// build the form
-		std::string form_file_name = "js/json/forms/";
+		std::string form_file_name = "html/js/json/forms/";
 		form_file_name += form_name;
 		std::ifstream form_file;
 		form_file.open(form_file_name.c_str(), std::ios::binary);
@@ -112,7 +112,7 @@ class JSON_Request: public Fastcgipp::Request<char>
 			// send the form (with return code/error info)
 		} else {
 		here();
-			ss << "form: {},\n";
+			ss << form_name << ": {form: {elements:[]}, values: {}, },\n";
 		}
 		return ss;
 	}
