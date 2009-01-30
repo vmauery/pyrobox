@@ -249,8 +249,9 @@ template<class char_t> bool Fastcgipp::Http::Session<char_t>::fill(const char* d
 		
 		if(name_size==12 && !memcmp(name, "HTTP_REFERER", 12) && value_size)
 		{
-			scoped_array<char> buffer(new char[value_size]);
-			status=char_to_string(buffer.get(), percent_escaped_to_real_bytes(value, buffer.get(), value_size), svalue);
+			char *buffer = new char[value_size];
+			status=char_to_string(buffer, percent_escaped_to_real_bytes(value, buffer, value_size), svalue);
+			delete [] buffer;
 		}
 		else if(name_size==12 && !memcmp(name, "CONTENT_TYPE", 12))
 		{
@@ -280,15 +281,17 @@ template<class char_t> bool Fastcgipp::Http::Session<char_t>::fill(const char* d
 		}
 		else if(name_size==12 && !memcmp(name, "QUERY_STRING", 12) && value_size)
 		{
-			scoped_array<char> buffer(new char[value_size]);
-			status=char_to_string(buffer.get(), percent_escaped_to_real_bytes(value, buffer.get(), value_size), svalue);
+			char *buffer = new char[value_size];
+			status=char_to_string(buffer, percent_escaped_to_real_bytes(value, buffer, value_size), svalue);
 			query_string = svalue;
+			delete [] buffer;
 		}
 		else if(name_size==22 && !memcmp(name, "HTTP_IF_MODIFIED_SINCE", 22))
 		{
 			basic_stringstream<char_t> date_stream;
+			posix_time::time_input_facet tif("%a, %d %b %Y %H:%M:%S GMT");
 			date_stream.write((char_t *)value, value_size);
-			date_stream.imbue(locale(locale::classic(), new posix_time::time_input_facet("%a, %d %b %Y %H:%M:%S GMT")));
+			date_stream.imbue(locale(locale::classic(), &tif));
 			date_stream >> svalue;
 		} else {
 			status=char_to_string(value, value_size, svalue);
@@ -377,6 +380,7 @@ template<class char_t> void Fastcgipp::Http::Session<char_t>::fill_posts(const c
 		}
 		
 		if(!end) {
+			delete [] buffer;
 			return;
 		}
 
@@ -419,14 +423,15 @@ template<class char_t> void Fastcgipp::Http::Session<char_t>::fill_posts(const c
 		buffer_size=buffer_size-(end-buffer+2);
 		if(!buffer_size)
 		{
+			delete [] buffer;
 			post_buffer.reset();
 			return;
 		}
-		buffer=new char[buffer_size];
-		memcpy(buffer, end+2, buffer_size);
-		post_buffer.reset(buffer);
+		post_buffer.reset(new char[buffer_size]);
+		memcpy(post_buffer.get(), end+2, buffer_size);
 		post_buffer_size=buffer_size;
 		size=0;
+		delete [] buffer;
 	}}
 }
 
