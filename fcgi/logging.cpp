@@ -47,7 +47,7 @@ namespace Fastcgipp
     {
         target_info temp;
 		temp.name = target;
-		std::ofstream *os = new std::ofstream("/tmp/errlog", std::ios_base::out | std::ios_base::app);
+		std::ofstream *os = new std::ofstream(target, std::ios_base::out | std::ios_base::app);
         temp.outstream = os;
         temp.min_level = min_level;
         targets.push_back(temp);

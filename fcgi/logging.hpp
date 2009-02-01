@@ -72,6 +72,7 @@ namespace Fastcgipp
         std::vector<std::string> severity_names_;
 
     public:
+		typedef boost::shared_ptr<logger> ptr;
         static boost::shared_ptr<logger> get();
 		static void shutdown();
         logger();
