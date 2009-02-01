@@ -44,4 +44,8 @@ static inline std::string trim(const std::string &s) {
 					s.find_last_not_of(" \t\r\n"));
 }
 
+void read_config_file(const std::string& cfile);
+
+const std::string& get_conf(const std::string& cid);
+
 #endif

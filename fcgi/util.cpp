@@ -1,4 +1,5 @@
 #include <util.hpp>
+#include <map>
 
 using namespace std;
 
@@ -50,4 +51,17 @@ string html_entities(const string& encode) {
 		}
 	}
 	return out;
+}
+
+static map<string,string> conf_map;
+void read_config_file(const string& cfile) {
+	
+}
+static const string empty = "";
+const string& get_conf(const string& cid) {
+	map<string,string>::iterator ival;
+	if ((ival = conf_map.find(cid)) != conf_map.end()) {
+		return ival->second;
+	}
+	return empty;
 }

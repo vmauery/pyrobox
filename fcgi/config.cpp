@@ -44,6 +44,7 @@
 #include <logging.hpp>
 #include <db.hpp>
 #include <model.hpp>
+#include <debug.hpp>
 
 using std::basic_string;
 
@@ -560,4 +561,7 @@ int main(int argc, char **argv, char **env)
 		// Catch any exception and put them in our errlog file.
 		error(e.what());
 	}
+
+	debug_mem_fini();
+	return 0;
 }

@@ -2,7 +2,7 @@ CFLAGS=-c -I . -g
 
 all: config
 
-config: http.o transceiver.o request.o protocol.o exceptions.o config.o db.o model.o logging.o util.o
+config: http.o transceiver.o request.o protocol.o exceptions.o config.o db.o model.o logging.o util.o debug.o
 	g++ $^ -g -o $@ -lsqlite3
 
 install: config
@@ -13,13 +13,16 @@ install: config
 http.o: http.cpp http.hpp util.hpp logging.hpp
 	g++ http.cpp $(CFLAGS) -o $@
 
+debug.o: debug.cpp debug.hpp logging.hpp
+	g++ debug.cpp $(CFLAGS) -o $@
+
 util.o: util.cpp util.hpp logging.hpp
 	g++ util.cpp $(CFLAGS) -o $@
 
 logging.o: logging.cpp logging.hpp
 	g++ logging.cpp $(CFLAGS) -o $@
 
-transceiver.o: transceiver.cpp transceiver.hpp util.hpp logging.hpp
+transceiver.o: transceiver.cpp transceiver.hpp util.hpp logging.hpp debug.hpp
 	g++ transceiver.cpp $(CFLAGS) -o $@
 
 request.o: request.cpp request.hpp util.hpp logging.hpp
@@ -37,7 +40,7 @@ db.o: db.cpp db.hpp logging.hpp
 model.o: model.cpp model.hpp db.hpp logging.hpp
 	g++ model.cpp $(CFLAGS) -o $@
 
-config.o: config.cpp manager.hpp request.hpp util.hpp db.hpp logging.hpp
+config.o: config.cpp manager.hpp request.hpp util.hpp db.hpp logging.hpp debug.hpp
 	g++ config.cpp $(CFLAGS) -o $@
 
 clean:

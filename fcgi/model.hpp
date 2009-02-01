@@ -23,11 +23,11 @@ class model {
 		static std::list<ptr> fetch_all(const std::string& type);
 	
 	protected:
-		virtual const std::string& table_name() { return _nothing_; }
+		virtual const char *table_name() const { return _nothing_; }
 
 	private:
 		void opendb();
-		static std::string _nothing_;
+		static const char _nothing_[];
 		static db::wptr _wdb;
 
 	protected:
@@ -47,10 +47,10 @@ class static_dhcp : public model {
 		static std::list<model::ptr> all();
 
 	protected:
-		virtual const std::string& table_name() { return _table_name; }
+		virtual const char *table_name() const { return _table_name; }
 
 	private:
-		static const std::string _table_name;
+		static const char _table_name[];
 	
 	// variable access interface
 	public:
@@ -75,10 +75,10 @@ class variable : public model {
 		static std::list<model::ptr> all(const std::string& form_name);
 
 	protected:
-		virtual const std::string& table_name() { return _table_name; }
+		virtual const char *table_name() const { return _table_name; }
 
 	private:
-		static const std::string _table_name;
+		static const char _table_name[];
 	
 	// variable access interface
 	public:

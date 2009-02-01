@@ -40,10 +40,10 @@ namespace Fastcgipp
 
     logger::~logger()
     {
-        log(__FILE__, __LINE__, "destructor", LL_Info);
+        log(__FILE__, __LINE__, std::string("destructor"), LL_Info);
     }
     
-    void logger::add_target(const std::string& target, log_level min_level)
+    void logger::add_target(const char *target, log_level min_level)
     {
         target_info temp;
 		temp.name = target;
@@ -51,7 +51,7 @@ namespace Fastcgipp
         temp.outstream = os;
         temp.min_level = min_level;
         targets.push_back(temp);
-		temp.name = "";
+		temp.name = NULL;
     }
     
     void logger::add_target(std::ostream* target, log_level min_level)

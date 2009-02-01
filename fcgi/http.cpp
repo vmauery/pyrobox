@@ -249,7 +249,7 @@ template<class char_t> bool Fastcgipp::Http::Session<char_t>::fill(const char* d
 		
 		if(name_size==12 && !memcmp(name, "HTTP_REFERER", 12) && value_size)
 		{
-			char *buffer = new char[value_size];
+			char *buffer = new char[value_size+1];
 			status=char_to_string(buffer, percent_escaped_to_real_bytes(value, buffer, value_size), svalue);
 			delete [] buffer;
 		}
@@ -281,7 +281,7 @@ template<class char_t> bool Fastcgipp::Http::Session<char_t>::fill(const char* d
 		}
 		else if(name_size==12 && !memcmp(name, "QUERY_STRING", 12) && value_size)
 		{
-			char *buffer = new char[value_size];
+			char *buffer = new char[value_size+1];
 			status=char_to_string(buffer, percent_escaped_to_real_bytes(value, buffer, value_size), svalue);
 			query_string = svalue;
 			delete [] buffer;

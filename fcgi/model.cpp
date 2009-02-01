@@ -7,7 +7,7 @@
 // class model
 /////////////////////////////////////////////////////////////////////////
 db::wptr model::_wdb;
-std::string model::_nothing_;
+const char model::_nothing_[] = "";
 
 void model::opendb() {
 	_db = _wdb.lock();
@@ -24,7 +24,7 @@ model::model() {
 model::model(int i) {
 	char sql[128];
 	opendb();
-	sprintf(sql, "select * from %s where id=%d", this->table_name().c_str(), i);
+	sprintf(sql, "select * from %s where id=%d", this->table_name(), i);
 	_db->execute(sql, values);
 }
 
@@ -57,7 +57,7 @@ std::list<model::ptr> model_class::all() {                           \
 	db::Results::iterator i;                                         \
 	db::Results results;                                             \
 	char sql[128];                                                   \
-	sprintf(sql, "select * from %s", v.table_name().c_str());        \
+	sprintf(sql, "select * from %s", v.table_name());        \
 	v._db->execute(sql, results);                                    \
 	for (i=results.begin(); i!=results.end(); i++) {                 \
 		model::ptr r(new model_class(*i));                           \
@@ -70,7 +70,7 @@ std::list<model::ptr> model_class::all() {                           \
 //////////////////////////////////////////////////////////////////////////
 // class static_dhcp
 /////////////////////////////////////////////////////////////////////////
-const std::string static_dhcp::_table_name = "app_staticdhcp";
+const char static_dhcp::_table_name[] = "app_staticdhcp";
 
 model_all(static_dhcp)
 
@@ -89,7 +89,7 @@ std::string static_dhcp::json() {
 //////////////////////////////////////////////////////////////////////////
 // class variable
 /////////////////////////////////////////////////////////////////////////
-const std::string variable::_table_name = "app_variable";
+const char variable::_table_name[] = "app_variable";
 
 std::list<model::ptr> variable::all(const std::string& form) {
 	variable v;
@@ -98,7 +98,7 @@ std::list<model::ptr> variable::all(const std::string& form) {
 	db::Results results;
 	char sql[128];
 	sprintf(sql, "select * from %s where form='%s'",
-		v.table_name().c_str(), form.c_str());
+		v.table_name(), form.c_str());
 	v._db->execute(sql, results);
 	for (i=results.begin(); i!=results.end(); i++) {
 		model::ptr r(new variable(*i));

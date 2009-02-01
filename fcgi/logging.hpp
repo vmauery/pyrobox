@@ -39,17 +39,15 @@ namespace Fastcgipp
         class target_info
         {
 			public:
-				std::string name;
+				const char *name;
 				std::ostream* outstream;
 				int min_level;      // Everything Greater or equal to this gets logged
 
-				target_info() {}
+				target_info() : name(NULL) {}
 				~target_info()
 				{
-					*outstream << "~target_info (" << (void*)outstream << ")" << std::endl;
-					if (name.length() > 0)
+					if (name != NULL)
 					{
-						*outstream << "deleting " << name << std::endl;
 						delete outstream;
 					}
 				}
@@ -79,7 +77,7 @@ namespace Fastcgipp
         logger();
         ~logger();
         void add_target(std::ostream* target, log_level min_level);
-        void add_target(const std::string& target, log_level min_level);
+        void add_target(const char *target, log_level min_level);
         void remove_target(std::ostream* target);
         void remove_target(const std::string& target);
         void log(const std::string& filename, int line, const std::string& message,

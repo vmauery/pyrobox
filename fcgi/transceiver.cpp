@@ -21,6 +21,7 @@
 
 #include <transceiver.hpp>
 #include <util.hpp>
+#include <debug.hpp>
 #include <logging.hpp>
 #include <boost/bind.hpp>
 #include <sys/inotify.h>
@@ -76,6 +77,7 @@ bool Fastcgipp::Transceiver::monitor_binary() {
 								  << " " << t.tm_hour << ":" << t.tm_min << ":" << t.tm_sec
 								  << ": found newer file, reloading...");
 						stop();
+						debug_mem_fini();
 						for (i = 0; i < 10; i++) {
 							execve(exepath, prog_argv, prog_env);
 							error("errno = " << errno);
@@ -123,6 +125,7 @@ void Fastcgipp::Transceiver::stop() {
 void Fastcgipp::Transceiver::terminate() {
 	warn("quitting");
 	stop();
+	debug_mem_fini();
 	exit(0);
 }
 
