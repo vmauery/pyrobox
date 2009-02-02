@@ -1,0 +1,5 @@
+*.o
+.*.swp
+fcgi/config
+config.fcgi
+*.db
