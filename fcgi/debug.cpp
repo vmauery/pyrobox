@@ -78,7 +78,7 @@ struct meminfo {
 #define INFO_COUNT 4096
 static struct meminfo info[INFO_COUNT];
 
-#define PAD_SIZE 4096
+#define PAD_SIZE 8192
 #define PAD_SIZE2 (PAD_SIZE*2)
 
 void *my_malloc(size_t size, const void *caller) {
@@ -127,6 +127,57 @@ void *my_realloc(void *addr, size_t size, const void *caller) {
 	return inf->addr;
 }
 
+int check_addr(void *addr) {
+	int corrupt = 0;
+	spin_lock(&lock);
+	void *real_addr;
+	unsigned char *f, *b;
+	debug_mem_stop();
+	fprintf(stderr, "check_addr(%#x)\n", addr);
+	if (addr == NULL) {
+		debug_mem_start();
+		spin_unlock(&lock);
+		return corrupt;
+	}
+	struct meminfo *inf = info + INFO_COUNT;
+	while (--inf >= info) {
+		if (inf->addr == addr)
+			break;
+	}
+	if (info > inf) {
+		fprintf(stderr, "check_addr called with %#x, which was never malloced\n", addr);
+		debug_mem_start();
+		spin_unlock(&lock);
+		return corrupt;
+	}
+	if (inf->state != mem_used) {
+		const char *msg;
+		switch (inf->state) {
+			case mem_unused: msg = "unallocated"; break;
+			case mem_freed: msg = "freed"; break;
+			default: msg = "unknown"; break;
+		}
+		fprintf(stderr, "check_addr called with %#x, which is is in state %s\n", msg);
+	}
+	real_addr = (void*)((char*)addr - PAD_SIZE);
+	f = (unsigned char*)real_addr;
+	b = (unsigned char*)((char*)addr + inf->size);
+
+	for (int i=0; i<PAD_SIZE; i++, f++, b++) {
+		if (*f != 23) {
+			fprintf(stderr, "memory corruption at %#x (-%#x) = %#2x\n", addr, (unsigned long)addr-(unsigned long)f, *f);
+			corrupt++;
+		}
+		if (*b != 23) {
+			fprintf(stderr, "memory corruption at %#x (+%#x) = %#2x\n", addr, (unsigned long)b-(unsigned long)addr-inf->size, *b);
+			corrupt++;
+		}
+	}
+	debug_mem_start();
+	spin_unlock(&lock);
+	return corrupt;
+}
+
 void my_free(void *addr, const void *caller) {
 	spin_lock(&lock);
 	frees++;
@@ -167,7 +218,7 @@ void my_free(void *addr, const void *caller) {
 		if (*f != 23)
 			fprintf(stderr, "memory corruption at %#x (-%#x) = %#2x\n", addr, (unsigned long)addr-(unsigned long)f, *f);
 		if (*b != 23)
-			fprintf(stderr, "memory corruption at %#x (+%#x) = %#2x\n", addr, (unsigned long)b-(unsigned long)addr, *b);
+			fprintf(stderr, "memory corruption at %#x (+%#x) = %#2x\n", addr, (unsigned long)b-(unsigned long)addr-inf->size, *b);
 	}
 	free(real_addr);
 	debug_mem_start();

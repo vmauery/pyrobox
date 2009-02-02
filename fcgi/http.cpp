@@ -27,6 +27,7 @@
 #include <http.hpp>
 #include <util.hpp>
 #include <logging.hpp>
+#include <debug.hpp>
 
 void Fastcgipp::Http::Address::assign(const char* start, const char* end)
 {
@@ -361,8 +362,7 @@ template<class char_t> void Fastcgipp::Http::Session<char_t>::fill_posts(const c
 		delete[] buffer;
 		return;
 	}
-	while(1)
-	{{
+	while(1) {
 		size_t buffer_size=post_buffer_size+size;
 		char* buffer=new char[buffer_size];
 		if(post_buffer_size) memcpy(buffer, post_buffer.get(), post_buffer_size);
@@ -372,17 +372,14 @@ template<class char_t> void Fastcgipp::Http::Session<char_t>::fill_posts(const c
 
 		const char* end=0;
 		for(const char* i=buffer+boundary_size; i<buffer+buffer_size-boundary_size; ++i) {
-			if(!memcmp(i, boundary.get(), boundary_size))
-			{
+			if(!memcmp(i, boundary.get(), boundary_size)) {
 				end=i;
 				break;
 			}
 		}
 		
-		if(!end) {
-			delete [] buffer;
+		if(!end)
 			return;
-		}
 
 		end-=4;
 		const char* start=buffer+boundary_size+2;
@@ -393,13 +390,10 @@ template<class char_t> void Fastcgipp::Http::Session<char_t>::fill_posts(const c
 		body_start+=4;
 		basic_string<char_t> name, value;
 
-		if(parse_xml_value("name", start, body_start, name))
-		{
-			if(parse_xml_value("filename", start, body_start, value))
-			{
+		if(parse_xml_value("name", start, body_start, name)) {
+			if(parse_xml_value("filename", start, body_start, value)) {
 				size_t size=end-body_start;
-				if(size)
-				{
+				if(size) {
 					basic_string<char_t> mime;
 					basic_string<char_t> headers;
 					char_to_string(start, body_start-start, headers);
@@ -412,27 +406,22 @@ template<class char_t> void Fastcgipp::Http::Session<char_t>::fill_posts(const c
 					memcpy(data.get(), body_start, size);
 					files[name] = upload_file<char_t>::create(value, mime, data, size);
 				}
-			}
-			else
-			{
+			} else {
 				basic_string<char_t>& value=post[name];
 				char_to_string(body_start, end-body_start, value);
 			}
 		}
-
 		buffer_size=buffer_size-(end-buffer+2);
-		if(!buffer_size)
-		{
-			delete [] buffer;
+		if(!buffer_size) {
 			post_buffer.reset();
 			return;
 		}
-		post_buffer.reset(new char[buffer_size]);
-		memcpy(post_buffer.get(), end+2, buffer_size);
+		char *new_buffer = new char[buffer_size];
+		memcpy(new_buffer, end+2, buffer_size);
+		post_buffer.reset(new_buffer);
 		post_buffer_size=buffer_size;
 		size=0;
-		delete [] buffer;
-	}}
+	}
 }
 
 

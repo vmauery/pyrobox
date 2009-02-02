@@ -6,11 +6,13 @@
 
 void debug_mem_init();
 void debug_mem_fini();
+int check_addr(void *);
 
 #else
 
 #define debug_mem_init()
 #define debug_mem_fini()
+#define check_addr()
 #endif
 
 #endif
