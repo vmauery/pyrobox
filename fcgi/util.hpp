@@ -18,31 +18,20 @@
 #define _S(A) A
 #endif
 
-static inline std::string check_url(std::string url) {
-	return url;
-}
+std::string check_url(std::string url);
 
 std::string html_entities(const std::string& encode);
 
-static inline void lower_case(std::string &s) {
-	transform(s.begin(), s.end(), s.begin(), (int(*)(int))tolower);
-}
+void lower_case(std::string &s);
 
 // breaks str up on any char in delimiter
 std::vector<std::string> explode(const std::string& delimiter, const std::string& str);
 
-static inline std::string ltrim(const std::string &s) {
-	return s.substr(s.find_first_not_of(" \t\r\n"));
-}
+std::string ltrim(const std::string &s);
 
-static inline std::string rtrim(const std::string &s) {
-	return s.substr(0, s.find_last_not_of(" \t\r\n"));
-}
+std::string rtrim(const std::string &s);
 
-static inline std::string trim(const std::string &s) {
-	return s.substr(s.find_first_not_of(" \t\r\n"),
-					s.find_last_not_of(" \t\r\n"));
-}
+std::string trim(const std::string &s);
 
 void read_config_file(const std::string& cfile);
 

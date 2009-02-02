@@ -89,8 +89,7 @@ class JSON_Request: public Fastcgipp::Request<char>
 	std::stringstream& form_response(std::stringstream& ss, const std::string& form_name) {
 		here();
 		// build the form
-		std::string form_file_name = "html/js/json/forms/";
-		form_file_name += form_name;
+		std::string form_file_name = get_conf("form_dir") + "/" + form_name;
 		std::ifstream form_file;
 		form_file.open(form_file_name.c_str(), std::ios::binary);
 		if (form_file) {
@@ -447,6 +446,9 @@ int main(int argc, char **argv, char **env)
 	prog_argc = argc;
 	prog_argv = argv;
 	prog_env = env;
+	std::string conf_file = "/etc/pyrobox.conf";
+
+	read_config_file(conf_file);
 
 	for (int i=1; i<argc; i++) {
 		if (strncmp(argv[i], "-p", 2) == 0) {
@@ -469,7 +471,8 @@ int main(int argc, char **argv, char **env)
 			}
 		}
 	}
-	Fastcgipp::logger::get()->add_target("/tmp/fcgi.log", Fastcgipp::LL_Info);
+
+	Fastcgipp::logger::get()->add_target(get_conf("log_file").c_str(), Fastcgipp::LL_Info);
 
 	struct sockaddr saddr;
 	socklen_t len;

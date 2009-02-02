@@ -1,5 +1,6 @@
-#include "model.hpp"
-#include "db.hpp"
+#include <model.hpp>
+#include <db.hpp>
+#include <util.hpp>
 #include <sstream>
 #include <iostream>
 
@@ -12,7 +13,7 @@ const char model::_nothing_[] = "";
 void model::opendb() {
 	_db = _wdb.lock();
 	if (!_db) {
-		_db.reset(new db("/home/vhmauery/local/pyrobox/pyrobox.db"));
+		_db.reset(new db(get_conf("db_file")));
 		_wdb = _db;
 	}
 }
