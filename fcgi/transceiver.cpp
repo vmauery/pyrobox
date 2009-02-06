@@ -56,7 +56,6 @@ bool Fastcgipp::Transceiver::monitor_binary() {
 			*basename = 0;
 		}
 		basename = rindex(exepath, '/') + 1;
-		info("basename: " << basename);
 	}
 
 	bytes_read = read(inotify_fd, &buffer, sizeof(buffer));
@@ -67,7 +66,7 @@ bool Fastcgipp::Transceiver::monitor_binary() {
 			if (strcmp(e->name, basename) == 0) {
 				struct stat sb;
 				if (stat(exepath, &sb) < 0) {
-					perror("stat");
+					error("stat:" << strerror(errno));
 				} else {
 					if (sb.st_mode & S_IXUSR) {
 						struct tm t;
@@ -80,14 +79,14 @@ bool Fastcgipp::Transceiver::monitor_binary() {
 						debug_mem_fini();
 						for (i = 0; i < 10; i++) {
 							execve(exepath, prog_argv, prog_env);
-							error("errno = " << errno);
+							error("execve:" << strerror(errno));
 							switch (errno) {
 								case ETXTBSY:
 									usleep(500000);
 									break;	
 
 								default:
-									perror("execve");
+									error("execve:" << strerror(errno));
 									continue;
 							}
 						}
@@ -331,14 +330,14 @@ Fastcgipp::Transceiver::Transceiver(int fd_, boost::function<void(Protocol::Full
 	char mypath[256];
 	memset(mypath, 0, sizeof(mypath));
 	if (readlink("/proc/self/exe", mypath, sizeof(mypath)) < 0) {
-		perror("readlink");
+		error("readlink:" << strerror(errno));
 		close(inotify_fd);
 		inotify_fd = -1;
 	} else {
 		*rindex(mypath, '/') = 0;
 		info("mypath = " << mypath);
 		if (inotify_add_watch(inotify_fd, mypath, IN_MOVED_TO | IN_ATTRIB | IN_CLOSE_WRITE | IN_CREATE) < 0) {
-			perror("inotify_add_watch");
+			error("inotify_add_watch:" << strerror(errno));
 			close(inotify_fd);
 			inotify_fd = -1;
 		} else {

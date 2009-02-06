@@ -508,17 +508,17 @@ int main(int argc, char **argv, char **env)
 			// get a socket
 			sock = socket(PF_INET, SOCK_STREAM, 0);
 			if (sock < 0) {
-				perror("socket create");
+				error("socket:" << strerror(errno));
 				return 1;
 			}
 
 			int ret = 1;
 			if ((setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char*)&ret, sizeof(ret))) < 0) {
-				perror("setsockopt");
+				error("setsockopt:" << strerror(errno));
 			}
 			// make the connection
 			if (bind(sock, (struct sockaddr*)&sockaddr, sizeof(sockaddr)) < 0) {
-				perror("socket bind");
+				error("bind:" << strerror(errno));
 				return 1;
 			}
 			listen(sock, 0);
@@ -536,13 +536,13 @@ int main(int argc, char **argv, char **env)
 			// get a socket
 			sock = socket(PF_UNIX, SOCK_STREAM, 0);
 			if (sock < 0) {
-				perror("socket create");
+				error("socket:" << strerror(errno));
 				return 1;
 			}
 
 			// make the connection
 			if (bind(sock, (struct sockaddr*)&sockaddr, sizeof(sockaddr)) < 0) {
-				perror("socket bind");
+				error("bind:" << strerror(errno));
 				return 1;
 			}
 			listen(sock, 0);
