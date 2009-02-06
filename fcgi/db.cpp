@@ -1,68 +1,83 @@
-#include "db.hpp"
+#include <db.hpp>
+#include <logging.hpp>
 //#include <iostream>
 
-int parse_rows(void *arg, int col_count, char **columns, char **col_names) {
+using namespace std;
+
+static int parse_rows(void *arg, int col_count, char **columns, char **col_names) {
 	db::Results *results = (db::Results *)arg;
 	db::Result row;
 	for (int i=0; i<col_count; i++) {
-//		std::cout << col_names[i] << " => " << columns[i] << ", ";
+//		cout << col_names[i] << " => " << columns[i] << ", ";
 		row[col_names[i]] = columns[i];
 	}
-//	std::cout << std::endl;
+//	cout << endl;
 	results->push_back(row);
 	return 0;
 }
 
-int parse_row(void *arg, int col_count, char **columns, char **col_names) {
+static int parse_row(void *arg, int col_count, char **columns, char **col_names) {
 	db::Result *row = (db::Result *)arg;
 	for (int i=0; i<col_count; i++) {
-//		std::cout << col_names[i] << " => " << columns[i] << ", ";
+//		cout << col_names[i] << " => " << columns[i] << ", ";
 		(*row)[col_names[i]] = columns[i];
 	}
-//	std::cout << std::endl;
+//	cout << endl;
 	return 0;
 }
 
-db::db(const std::string &dbname) {
+db::db(const string &dbname) {
 	int rc = sqlite3_open(dbname.c_str(), &handle);
 	if (rc == SQLITE_OK) {
-//		std::cout << "db " << dbname << " open (" << handle << ")" << std::endl;
+//		cout << "db " << dbname << " open (" << handle << ")" << endl;
 	} else {
-//		std::cout << "db " << dbname << " failed to open" << std::endl;
+//		cout << "db " << dbname << " failed to open" << endl;
 	}
 }
 db::~db() {
 	sqlite3_close(handle);
-//	std::cout << "db (" << handle << ") closed" << std::endl;
+//	cout << "db (" << handle << ") closed" << endl;
 }
 
-bool db::execute(const std::string &query) {
+bool db::execute(const string &query) {
 	char *errors = NULL;
-//	std::cout << "db (" << handle << "): " << query << std::endl;
-	sqlite3_exec(handle, query.c_str(), parse_row, NULL, &errors);
-	if (errors) {
+	info("db (" << handle << "): " << query);
+	if (sqlite3_exec(handle, query.c_str(), parse_row, NULL, &errors) != SQLITE_OK) {
+		warn("\"" << query << "\": " << errors);
 		sqlite3_free(errors);
 		return false;
 	}
 	return true;
 }
 
-bool db::execute(const std::string &query, db::Results &results) {
+bool db::execute(const string &query, long int &id) {
 	char *errors = NULL;
-//	std::cout << "db (" << handle << "): " << query << std::endl;
-	sqlite3_exec(handle, query.c_str(), parse_rows, &results, &errors);
-	if (errors) {
+	info("db (" << handle << "): " << query);
+	if (sqlite3_exec(handle, query.c_str(), parse_row, NULL, &errors) != SQLITE_OK) {
+		warn("\"" << query << "\": " << errors);
+		sqlite3_free(errors);
+		return false;
+	}
+	id = (long int)sqlite3_last_insert_rowid(handle);
+	return true;
+}
+
+bool db::execute(const string &query, db::Results &results) {
+	char *errors = NULL;
+	info("db (" << handle << "): " << query);
+	if (sqlite3_exec(handle, query.c_str(), parse_rows, &results, &errors) != SQLITE_OK) {
+		warn("\"" << query << "\": " << errors);
 		sqlite3_free(errors);
 		return false;
 	}
 	return true;
 }
 
-bool db::execute(const std::string &query, db::Result &result) {
+bool db::execute(const string &query, db::Result &result) {
 	char *errors = NULL;
-//	std::cout << "db (" << handle << "): " << query << std::endl;
-	sqlite3_exec(handle, query.c_str(), parse_row, &result, &errors);
-	if (errors) {
+	info("db (" << handle << "): " << query);
+	if (sqlite3_exec(handle, query.c_str(), parse_row, &result, &errors) != SQLITE_OK) {
+		warn("\"" << query << "\": " << errors);
 		sqlite3_free(errors);
 		return false;
 	}
@@ -76,24 +91,24 @@ bool db::execute(const std::string &query, db::Result &result) {
 int main(int argc, char *argv) {
 /*
 	db d("pyrobox.db");
-	std::deque<std::vector<std::string> > rows;
-	std::vector<std::string> cols;
+	deque<vector<string> > rows;
+	vector<string> cols;
 	d.execute("select * from app_staticdhcp", rows, cols);
-	std::vector<std::string>::iterator i;
-	std::deque<std::vector<std::string> >::iterator j;
+	vector<string>::iterator i;
+	deque<vector<string> >::iterator j;
 	for (i=cols.begin(); i != cols.end(); i++) {
-		std::cout << *i << "|";
+		cout << *i << "|";
 	}
-	std::cout << std::endl;
+	cout << endl;
 	for (j=rows.begin(); j != rows.end(); j++) {
 		for (i=j->begin(); i != j->end(); i++) {
-			std::cout << *i << "|";
+			cout << *i << "|";
 		}
-		std::cout << std::endl;
+		cout << endl;
 	}
 */
-	std::string response;
-	std::stringstream ss;
+	string response;
+	stringstream ss;
 	db d("pyrobox.db");
 	db::Results statichosts;
 	d.execute("select * from app_staticdhcp", statichosts);
@@ -115,7 +130,7 @@ int main(int argc, char *argv) {
 	}
 	ss << "\n]";
 	response = ss.str();
-	std::cout << response << std::endl;
+	cout << response << endl;
 	return 0;
 }
 #endif

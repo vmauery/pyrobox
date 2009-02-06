@@ -4,6 +4,17 @@
  */
 
 var url = document.location + ""; url = url.replace(/http(s)?:\/\/[^\/]+/, '');
+
+function is_array(obj) {
+	if (obj == null) return false;
+	return obj.constructor == Array;
+}
+function is_object(obj) {
+	//returns true is it is an object
+	if (obj == null) return false;
+	return obj.constructor == Object;
+}
+
 (function($) {$(function() {
 	/* DEBUG jQuery.post override.  Comment out for production use */
 	$.post = function ( url, data, callback, type ) {
@@ -35,48 +46,58 @@ var url = document.location + ""; url = url.replace(/http(s)?:\/\/[^\/]+/, '');
 	}
 	/* end DEBUG jQuery.post */
 	/* DEBUG dump */
-	function _dump(obj, name, depth) {
-		var MAX_DUMP_DEPTH = 3;
-		var indent = "  ";
-		if (!depth) depth = 0;
-		if (depth > MAX_DUMP_DEPTH) {
-			return indent + name + ": <Maximum Depth Reached>\n";
+	$.dump = function(v, level) {
+		return _dump(v, level);
+	}
+
+	function _dump(v, level) {
+		var dumped_text = "";
+		if(!level) level = 0;
+
+		//The padding given at the beginning of the line.
+		var level_padding = "";
+		for(var j=0;j<level+1;j++) level_padding += "    ";
+
+		if (is_object(v)) {
+			dumped_text += level_padding+"{\n";
+		} else if (is_array(v)) {
+			dumped_text += level_padding+"[\n";
 		}
-		if (typeof obj == "object") {
-			var child = null;
-			var output = indent + name + "\n";
-			indent += "\t";
-			for (var item in obj)
-			{
-				try {
-					child = obj[item];
-				} catch (e) {
-					child = "<Unable to Evaluate>";
-				}
-				if (typeof child == "object") {
-					output += _dump(child, item, depth + 1);
+		if(typeof v == "object") { //Array/Hashes/Objects 
+			for(var item in v) {
+				var value = v[item];
+
+				if(typeof value == "object") { // not scalar
+					dumped_text += level_padding + "'" + item + "':\n";
+					dumped_text += _dump(value,level+1);
 				} else {
-					output += indent + item + ": " + child + "\n";
+					dumped_text += level_padding + "'" + item + "' => \"" + value + "\"\n";
 				}
 			}
-			return output;
-		} else {
-			return obj;
+		} else { //Strings/Chars/Numbers etc.
+			return v+"\n";
 		}
-	}
-	$.dump = function(obj) {
-		var v = "<pre>"+_dump(obj, '')+"</pre>";
+		if (is_object(v)) {
+			dumped_text += "\n"+level_padding+"}\n";
+		} else if (is_array(v)) {
+			dumped_text += "\n"+level_padding+"]\n";
+		}
+		return dumped_text;
+	};
+
+	$.dump_scr = function(obj) {
+		var v = "<pre>"+_dump(obj)+"</pre>";
 		$('body').append('<div class="popup">'+v+'</div>');
 		$('.popup').unbind('click').click(function(e) {
 			$(this).remove();
 		});
-	}
+	};
 	/* end DEBUG dump */
 
 	
 	$.postJSON = function( url, data, callback ) {
 		return jQuery.post(url, data, callback, "json");
-	}
+	};
 
 /* common dynamic forms code */
 	function js_links() {
@@ -240,6 +261,7 @@ var url = document.location + ""; url = url.replace(/http(s)?:\/\/[^\/]+/, '');
 	}
 
 	$.render_form = function(form, values) {
+		$.log($.dump(values));
 		if (typeof form == 'array' && values == null) {
 			values = form[1];
 			form = form[0];

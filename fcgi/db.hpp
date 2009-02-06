@@ -8,8 +8,6 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 
-int parse_row(void *arg, int col_count, char **columns, char **col_names);
-
 class db {
 	public:
 		typedef boost::shared_ptr<db> ptr;
@@ -22,6 +20,8 @@ class db {
 		~db();
 		// execute, discard any results
 		bool execute(const std::string &query);
+		// execute, return insert id
+		bool execute(const std::string &query, long int &id);
 		// execute, return all matching rows
 		bool execute(const std::string &query, Results &results);
 		// execute, return the last matched row

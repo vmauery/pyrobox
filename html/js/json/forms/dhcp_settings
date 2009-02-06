@@ -1,11 +1,9 @@
 { type: "form", name: "dhcp-settings-form",
 	comment: "id: 'defaults to name', class: 'form ajax json', method: 'post', action: 'gobabygogo.cgi'",
 	class: "form ajax json",
-	onsubmit: something_naughty,
 	elements: [
 		{ type: "radios", name: "dhcp_enabled", label: "DHCP server", 
 		  description: "Enable the DHCP server.",
-		  onfocus: something_naughty,
 		  default_value: "off", options:
 			[
 				{ label: "Enabled", value: "on" },
@@ -46,6 +44,6 @@
 				{ label: "1 week", value: 604800 },
 			],
 		},
-		{ type: "button", name: "submit", value: "Save", onclick: "alert('Saving settings');" },
+		{ type: "button", button_type: "submit", name: "submit", value: "Save", },
 	]
 }

@@ -4,6 +4,7 @@
 #include <sstream>
 #include <iostream>
 
+using namespace std;
 //////////////////////////////////////////////////////////////////////////
 // class model
 /////////////////////////////////////////////////////////////////////////
@@ -22,39 +23,88 @@ model::model() {
 	opendb();
 }
 
-model::model(int i) {
+model::model(long int i) {
 	char sql[128];
 	opendb();
-	sprintf(sql, "select * from %s where id=%d", this->table_name(), i);
-	_db->execute(sql, values);
+	sprintf(sql, "select * from %s where id=%ld", this->table_name(), i);
+	_db->execute(sql, _values);
 }
 
-model::model(db::Result& vals) {
+model::model(const db::Result& vals) {
 	opendb();
-	values = vals;
+	_values = vals;
 }
 
-int model::id() {
-	int x;
-	std::istringstream i(values["id"]);
+long int model::id() {
+	long int x;
+	istringstream i(_values["id"]);
 	if (!(i >> x))
      	return 0;
 	return x;
 }
 
-std::list<model::ptr> model::fetch_all(const std::string& type) {
+list<model::ptr> model::fetch_all(const string& type) {
 
 	if (type == "static_dhcp") {
 		return static_dhcp::all();
 	}
-	return std::list<model::ptr>();
+	return list<model::ptr>();
+}
+
+bool model::save() {
+	const vector<string>& _names = this->names();
+	stringstream ss;
+	if (id()) {
+		// update
+		ss << "UPDATE " << table_name() << " SET ";
+		for (vector<string>::const_iterator i=_names.begin();;) {
+			if (*i == "id") { i++; continue; }
+			// FIXME: escape the values before inserting into db (' and \ must be escaped)
+			ss << *i << "='" << _values[*i] << "'";
+			if (++i == _names.end()) break;
+			ss << ", ";
+		}
+		ss << "WHERE id=" << _values["id"];
+		_db->execute(ss.str());
+	} else {
+		// insert
+		long int id;
+		char idstr[128];
+		ss << "INSERT INTO " << table_name() << " (";
+		for (vector<string>::const_iterator i=_names.begin();;) {
+			if (*i == "id") { i++; continue; }
+			ss << *i;
+			if (++i == _names.end()) break;
+			ss << ", ";
+		}
+		ss << ") VALUES (";
+		for (vector<string>::const_iterator i=_names.begin();;) {
+			if (*i == "id") { i++; continue; }
+			// FIXME: escape the values before inserting into db (' and \ must be escaped)
+			ss << "'" << _values[*i] << "'";
+			if (++i == _names.end()) break;
+			ss << ", ";
+		}
+		ss << ")";
+		_db->execute(ss.str(), id);
+		sprintf(idstr, "%ld", id);
+		_values["id"] = idstr;
+	}
+}
+
+vector<string> model::values() const {
+	vector<string> n;
+	for (db::Result::const_iterator i=_values.begin(); i!=_values.end(); i++) {
+		n.push_back(i->second);
+	}
+	return n;
 }
 
 // template<class model_class>::all()
 #define model_all(model_class)                                       \
-std::list<model::ptr> model_class::all() {                           \
+list<model::ptr> model_class::all() {                           \
 	model_class v;                                                   \
-	std::list<model::ptr> ret;                                       \
+	list<model::ptr> ret;                                       \
 	db::Results::iterator i;                                         \
 	db::Results results;                                             \
 	char sql[128];                                                   \
@@ -73,10 +123,21 @@ std::list<model::ptr> model_class::all() {                           \
 /////////////////////////////////////////////////////////////////////////
 const char static_dhcp::_table_name[] = "app_staticdhcp";
 
+const vector<string>& static_dhcp::names() const {
+	static vector<string> _names;
+	if (_names.size() == 0) {
+		_names.push_back("id");
+		_names.push_back("hostname");
+		_names.push_back("ip_addr");
+		_names.push_back("mac_addr");
+	}
+	return _names;
+}
+
 model_all(static_dhcp)
 
-std::string static_dhcp::json() {
-	std::stringstream ss;
+string static_dhcp::json() {
+	stringstream ss;
 	ss << "{ "
 	   << "id: " << id() << ", "
 	   << "hostname: \"" << hostname() << "\", "
@@ -92,13 +153,36 @@ std::string static_dhcp::json() {
 /////////////////////////////////////////////////////////////////////////
 const char variable::_table_name[] = "app_variable";
 
-std::list<model::ptr> variable::all(const std::string& form) {
+const vector<string>& variable::names() const {
+	static vector<string> _names;
+	if (_names.size() == 0) {
+		_names.push_back("id");
+		_names.push_back("vgroup");
+		_names.push_back("name");
+		_names.push_back("value");
+	}
+	return _names;
+}
+
+variable::variable(const string& vg, const string& n) {
+	char sql[512];
+	sprintf(sql, "select * from %s where vgroup='%s' and name='%s'",
+		table_name(), vg.c_str(), n.c_str());
+	if (_db->execute(sql, _values) != SQLITE_OK) {
+		info("variable " << vg << ":" << n << " not set");
+		vgroup(vg);
+		name(n);
+	}
+	info(_values["vgroup"] << ", "<< _values["name"] << ", " << _values["value"]);
+}
+
+list<model::ptr> variable::all(const string& form) {
 	variable v;
-	std::list<model::ptr> ret;
+	list<model::ptr> ret;
 	db::Results::iterator i;
 	db::Results results;
-	char sql[128];
-	sprintf(sql, "select * from %s where form='%s'",
+	char sql[512];
+	sprintf(sql, "select * from %s where vgroup='%s'",
 		v.table_name(), form.c_str());
 	v._db->execute(sql, results);
 	for (i=results.begin(); i!=results.end(); i++) {
@@ -108,17 +192,24 @@ std::list<model::ptr> variable::all(const std::string& form) {
 	return ret;
 }
 
-std::string variable::json() {
-	std::stringstream ss;
-	ss << "{ "
-	   << name() << ": \""
-	   << value() << "\", "
-	   << " }";
+string variable::json() {
+	stringstream ss;
+	ss << name() << ": \""
+	   << value() << "\"";
 	return ss.str();
 }
 
 
+std::string variable::get(const std::string& vg, const std::string& n) {
+	variable v(vg, n);
+	return v.value();
+}
 
+void variable::set(const std::string& vg, const std::string &n, const std::string &v) {
+	variable sv(vg, n);
+	sv.value(v);
+	sv.save();
+}
 
 
 
@@ -132,10 +223,10 @@ std::string variable::json() {
 #include <list>
 #include <iostream>
 int main(int argc, char *argv[]) {
-	std::basic_string<char> response;
-	std::list<static_dhcp>::iterator rowiter;
-	std::list<static_dhcp> statichosts = static_dhcp::all();
-	std::stringstream ss;
+	basic_string<char> response;
+	list<static_dhcp>::iterator rowiter;
+	list<static_dhcp> statichosts = static_dhcp::all();
+	stringstream ss;
 	ss << "[\n";
 	for (rowiter=statichosts.begin(); rowiter!=statichosts.end(); ) {
 		ss << rowiter->json();
@@ -145,7 +236,7 @@ int main(int argc, char *argv[]) {
 	}
 	ss << "\n]";
 	response = ss.str();
-	std::cout << "Content-Type: application/json\r\n"
+	cout << "Content-Type: application/json\r\n"
 		<< "Expires: Wed, 14 Jan 2000 05:45:48 GMT\r\n"
 		<< "Content-Length: " << response.length() << "\r\n\r\n"
 		<< response;

@@ -75,14 +75,14 @@ class JSON_Request: public Fastcgipp::Request<char>
 		here();
 		std::list<model::ptr>::iterator rowiter;
 		std::list<model::ptr> models = variable::all(form_name);
-		ss << "values: [\n";
+		ss << "values: {\n";
 		for (rowiter=models.begin(); rowiter!=models.end(); ) {
 			ss << (*rowiter)->json();
 			if (++rowiter != models.end()) {
 				ss << ",\n";
 			}
 		}
-		ss << "\n],\n";
+		ss << "\n},\n";
 		return ss;
 	}
 
@@ -106,8 +106,9 @@ class JSON_Request: public Fastcgipp::Request<char>
 			form_file.close();
 			delete[] buf;
 
-			ss << "}, ";
+			ss << ", \n";
 			form_values(ss, form_name);
+			ss << "}, ";
 			// verify input data
 			// send the form (with return code/error info)
 		} else {
@@ -115,6 +116,19 @@ class JSON_Request: public Fastcgipp::Request<char>
 			ss << form_name << ": {form: {elements:[]}, values: {}, },\n";
 		}
 		return ss;
+	}
+
+	void form_submit(std::stringstream& ss) {
+		std::string form_name = session.get.find("form_submit")->second;
+		info("submitted form " << form_name);
+		// look up the form
+		// determine valid submitted names and types
+		// validate submitted values
+		variable::set("dhcp_settings", "dhcp_enabled", session.post["dhcp_enabled"]);
+		variable::set("dhcp_settings", "dhcp_dynamic_enabled", session.post["dhcp_dynamic_enabled"]);
+		variable::set("dhcp_settings", "dhcp_start_ip", session.post["dhcp_start_ip"]);
+		variable::set("dhcp_settings", "dhcp_end_ip", session.post["dhcp_end_ip"]);
+		variable::set("dhcp_settings", "dhcp_lease_time", session.post["dhcp_lease_time"]);
 	}
 
 	bool json_response() {
@@ -127,14 +141,17 @@ class JSON_Request: public Fastcgipp::Request<char>
 		{
 			info(it->first << ": " << it->second);
 		}
-		foreach(Fastcgipp::strmap, session.post, post) {
-			if (post->second == "form") {
-				form_response(ss, post->first);
-			} else if (post->second == "records") {
-				db_entries(ss, post->first);
+		if (session.get.find("form_submit") != session.get.end()) {
+			form_submit(ss);
+		} else {
+			foreach(Fastcgipp::strmap, session.post, post) {
+				if (post->second == "form") {
+					form_response(ss, post->first);
+				} else if (post->second == "records") {
+					db_entries(ss, post->first);
+				}
 			}
 		}
-		
 		ss << "}";
 		response = ss.str();
 		out << "Content-Type: application/json\r\n"

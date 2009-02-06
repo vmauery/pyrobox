@@ -16,10 +16,10 @@ table.deny-dhcp {
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/jquery.combobox.js"></script>
 <script type="text/javascript" src="/js/jquery.tablesorter.js"></script>
+<script type="text/javascript" src="/js/jquery.form.js"></script>
 <script type="text/javascript" src="/js/pyrobox.js"></script>
 
 <script type="text/javascript">
-function something_naughty() {return false;}
 (function($) {$(function() {
 function promote_row(obj) {
 	var $row = $(obj).parent().parent();
@@ -99,6 +99,19 @@ $.postJSON(url, {static_dhcp: "records", dhcp_settings: "form"}, function(data) 
 		redraw_static_leases();
 		$(".tablesorter").trigger("update");
 
+});
+
+var dhcp_settings_form_options = {
+	url: "/config/?json&form_submit=dhcp_settings&debug",
+	type: "POST",
+	dataType: "json",
+	success: function() {
+		alert("Settings saved");
+	},
+};
+$('#dhcp-settings-form').submit(function() {
+	$(this).ajaxSubmit(dhcp_settings_form_options);
+	return false;
 });
 
 }); })(jQuery);
