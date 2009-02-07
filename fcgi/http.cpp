@@ -217,6 +217,11 @@ template<class char_t> int Fastcgipp::Http::percent_escaped_to_real_bytes(const 
 			++dest;
 			if(++i==size) break;
 		}
+		else if (*source == '+') {
+			*dest++ = ' ';
+			source++;
+			if(++i==size) break;
+		}
 		else
 		{
 			*dest++=*source++;
