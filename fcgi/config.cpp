@@ -124,11 +124,10 @@ class JSON_Request: public Fastcgipp::Request<char>
 		// look up the form
 		// determine valid submitted names and types
 		// validate submitted values
-		variable::set("dhcp_settings", "dhcp_enabled", session.post["dhcp_enabled"]);
-		variable::set("dhcp_settings", "dhcp_dynamic_enabled", session.post["dhcp_dynamic_enabled"]);
-		variable::set("dhcp_settings", "dhcp_start_ip", session.post["dhcp_start_ip"]);
-		variable::set("dhcp_settings", "dhcp_end_ip", session.post["dhcp_end_ip"]);
-		variable::set("dhcp_settings", "dhcp_lease_time", session.post["dhcp_lease_time"]);
+		Fastcgipp::strmap validated = session.post;
+		for (Fastcgipp::strmap::iterator i=validated.begin(); i!=validated.end(); i++) {
+			variable::set(form_name, i->first, i->second);
+		}
 	}
 
 	bool json_response() {
