@@ -45,6 +45,7 @@
 #include <db.hpp>
 #include <model.hpp>
 #include <debug.hpp>
+#include <form.hpp>
 
 using std::basic_string;
 
@@ -71,63 +72,9 @@ class JSON_Request: public Fastcgipp::Request<char>
 		return ss;
 	}
 
-	std::stringstream& form_values(std::stringstream& ss, const std::string& form_name) {
-		here();
-		std::list<model::ptr>::iterator rowiter;
-		std::list<model::ptr> models = variable::all(form_name);
-		ss << "values: {\n";
-		for (rowiter=models.begin(); rowiter!=models.end(); ) {
-			ss << (*rowiter)->json();
-			if (++rowiter != models.end()) {
-				ss << ",\n";
-			}
-		}
-		ss << "\n},\n";
-		return ss;
-	}
-
 	std::stringstream& form_response(std::stringstream& ss, const std::string& form_name) {
 		here();
-		// build the form
-		std::string form_file_name = get_conf("form_dir") + "/" + form_name;
-		std::ifstream form_file;
-		form_file.open(form_file_name.c_str(), std::ios::binary);
-		if (form_file) {
-		here();
-			ss << form_name << ": { form: ";
-			int bytes_read;
-			form_file.seekg (0, std::ios::end);
-			bytes_read = form_file.tellg();
-			form_file.seekg (0, std::ios::beg);
-
-			char *buf = new char[bytes_read];
-			form_file.read(buf, bytes_read);
-			ss.write(buf, bytes_read);
-			form_file.close();
-			delete[] buf;
-
-			ss << ", \n";
-			form_values(ss, form_name);
-			ss << "}, ";
-			// verify input data
-			// send the form (with return code/error info)
-		} else {
-		here();
-			ss << form_name << ": {form: {elements:[]}, values: {}, },\n";
-		}
 		return ss;
-	}
-
-	void form_submit(std::stringstream& ss) {
-		std::string form_name = session.get.find("form_submit")->second;
-		info("submitted form " << form_name);
-		// look up the form
-		// determine valid submitted names and types
-		// validate submitted values
-		Fastcgipp::strmap validated = session.post;
-		for (Fastcgipp::strmap::iterator i=validated.begin(); i!=validated.end(); i++) {
-			variable::set(form_name, i->first, i->second);
-		}
 	}
 
 	bool json_response() {
@@ -136,16 +83,27 @@ class JSON_Request: public Fastcgipp::Request<char>
 		std::string response;
 		ss << "{\n";
 		// handle requests
-		for(Fastcgipp::strmap::iterator it=session.post.begin(); it!=session.post.end(); ++it)
+		Fastcgipp::strmap::iterator it;
+		for(it=session.post.begin(); it!=session.post.end(); ++it)
 		{
 			info(it->first << ": " << it->second);
 		}
-		if (session.get.find("form_submit") != session.get.end()) {
-			form_submit(ss);
+		if ((it = session.get.find("form_submit")) != session.get.end()) {
+			try {
+				form::ptr f = form::create(it->second);
+				ss << f->submit(session.post);
+			} catch (form::does_not_exist e) {
+				// FIXME: form error path?
+			}
 		} else {
 			foreach(Fastcgipp::strmap, session.post, post) {
 				if (post->second == "form") {
-					form_response(ss, post->first);
+					try {
+						form::ptr f = form::create(post->first);
+						ss << f->render();
+					} catch (form::does_not_exist e) {
+						ss << post->first << ": {form: {elements:[]}, values: {}, },\n";
+					}
 				} else if (post->second == "records") {
 					db_entries(ss, post->first);
 				}
