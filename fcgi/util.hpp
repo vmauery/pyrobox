@@ -18,6 +18,9 @@
 #define _S(A) A
 #endif
 
+#define MIN(A,B) ((A)<(B)?(A):(B))
+#define MAX(A,B) ((A)>(B)?(A):(B))
+
 std::string check_url(std::string url);
 
 std::string html_entities(const std::string& encode);

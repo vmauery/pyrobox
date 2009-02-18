@@ -32,6 +32,8 @@ string rtrim(const string &s) {
 string trim(const string &s) {
 	size_t bpos = s.find_first_not_of(" \t\r\n");
 	size_t epos = s.find_last_not_of(" \t\r\n");
+	if (epos == bpos == string::npos)
+		return s;
 	if (epos != string::npos)
 		epos++;
 	if (bpos != 0)

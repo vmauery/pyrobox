@@ -1,49 +1,66 @@
-{ type: "form", name: "dhcp-settings-form",
-	comment: "id: 'defaults to name', class: 'form ajax json', method: 'post', action: 'gobabygogo.cgi'",
-	class: "form ajax json",
-	elements: [
-		{ type: "radios", name: "dhcp_enabled", label: "DHCP server", 
-		  description: "Enable the DHCP server.",
-		  default_value: "off", options:
-			[
-				{ label: "Enabled", value: "on" },
-				{ label: "Disabled", value: "off" },
-			],
-		},
-		{ type: "radios", name: "dhcp_dynamic_enabled", label: "Offer dynamic IP addresses", 
-		  description: "Allow dynamic IP addresses to be handed out in addition to any static entries listed below.",
-		  default_value: "off", options:
-			[
-				{ label: "Enabled", value: "on" },
-				{ label: "Disabled", value: "off" },
-			],
-		},
-		{ type: "textbox", name: "dhcp_start_ip", label: "Dynamic DHCP beginning address", 
-		  description: "The DHCP server can give out IP addresses to other than the static entries below.  Enter the range of IP addresses to hand out dynamically here.  Make sure that this range does not overlap with the static DHCP entries.",
-		  default_value: "10.0.0.100",
-		},
-		{ type: "textbox", name: "dhcp_end_ip", label: "Dynamic DHCP end address", 
-		  default_value: "10.0.0.200",
-		},
-		{ type: "select", name: "dhcp_lease_time", label: "Lease length", 
-		  description: "If you have a lot of DHCP users, you may want to keep this time short or the server may run out of IP addresses.  If you are only using static DHCP, then longer times means the clients won't ask the server for addresses as often.",
-		  default_value: "86400", options:
-			[
-				{ label: "20 minutes", value: 1200 },
-				{ label: "30 minutes", value: 1800 },
-				{ label: "1 hour", value: 3600 },
-				{ label: "3 hours", value: 10800 },
-				{ label: "6 hours", value: 21600 },
-				{ label: "12 hours", value: 43200},
-				{ label: "1 day", value: 86400 },
-				{ label: "2 days", value: 172800 },
-				{ label: "3 days", value: 259200 },
-				{ label: "4 days", value: 345600 },
-				{ label: "5 days", value: 432000 },
-				{ label: "6 days", value: 518400 },
-				{ label: "1 week", value: 604800 },
-			],
-		},
-		{ type: "button", button_type: "submit", name: "submit", value: "Save", },
-	]
-}
+form:
+	name: dhcp_settings
+	class: form ajax json
+	action: gobabygogo.cgi
+	method: post
+	elements:
+		radios:
+			name: dhcp_enabled
+			label: DHCP server
+			description: Enable the DHCP server.
+			default_value: off
+			options:
+				on: Enabled
+				off: Disabled
+			end: options
+		end: radios
+		radios:
+			name: dhcp_dynamic_enabled
+			label: Offer dynamic IP addresses
+			description: Allow dynamic IP addresses to be handed out in addition to any static entries listed below.
+			default_value: off
+			options:
+				on: Enabled
+				off: Disabled
+			end: options
+		end: radios
+		textbox:
+			name: dhcp_start_ip
+			label: Dynamic DHCP beginning address
+			description: The DHCP server can give out IP addresses to other than the static entries below.  Enter the range of IP addresses to hand out dynamically here.  Make sure that this range does not overlap with the static DHCP entries.
+			default_value: 10.0.0.100
+			validate: ip_address
+		end: textbox
+		textbox:
+			name: dhcp_end_ip
+			label: Dynamic DHCP end address
+			default_value: 10.0.0.200
+			validate: ip_address
+		end: textbox
+		select:
+			name: dhcp_lease_time
+			label: Offer dynamic IP addresses
+			description: Allow dynamic IP addresses to be handed out in addition to any static entries listed below.
+			default_value: off
+			options:
+				1200: 20 minutes
+				1800: 30 minutes
+				3600: 1 hour
+				10800: 3 hours
+				21600: 6 hours
+				43200: 12 hours
+				86400: 1 day
+				172800: 2 days
+				259200: 3 days
+				345600: 4 days
+				432000: 5 days
+				518400: 6 days
+				604800: 1 week
+			end: options
+		end: select
+		submit:
+			name: submit
+			value: Save
+		end: submit
+	end: elements
+end: dhcp_settings

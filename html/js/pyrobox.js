@@ -367,10 +367,16 @@ function is_object(obj) {
 
 	$.render_button = function(el) {
 		var attributes = [];
-		var button_type = ("button_type" in el) ? el.button_type : "button";
 		element_common(el, attributes);
 		return '<div class="field-item">\n'+
-			'\t<span class="edit"><input type="'+button_type+'" name="'+el.name+'" id="'+el.id+'" value="'+el.value+'" '+render_attributes(el)+'/></span><span class="error"></span>\n</div>\n';
+			'\t<span class="edit"><input type="'+el.type+'" name="'+el.name+'" id="'+el.id+'" value="'+el.value+'" '+render_attributes(el)+'/></span><span class="error"></span>\n</div>\n';
+	};
+
+	$.render_submit = function(el) {
+		var attributes = [];
+		element_common(el, attributes);
+		return '<div class="field-item">\n'+
+			'\t<span class="edit"><input type="'+el.type+'" name="'+el.name+'" id="'+el.id+'" value="'+el.value+'" '+render_attributes(el)+'/></span><span class="error"></span>\n</div>\n';
 	};
 
 	$.render_file = function(el) {

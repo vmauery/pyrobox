@@ -139,10 +139,10 @@ model_all(static_dhcp)
 string static_dhcp::json() {
 	stringstream ss;
 	ss << "{ "
-	   << "id: " << id() << ", "
-	   << "hostname: \"" << hostname() << "\", "
-	   << "ip_addr: \"" << ip_addr() << "\", "
-	   << "mac_addr: \"" << mac_addr() << "\", "
+	   << "\"id\": " << id() << ", "
+	   << "\"hostname\": \"" << hostname() << "\", "
+	   << "\"ip_addr\": \"" << ip_addr() << "\", "
+	   << "\"mac_addr\": \"" << mac_addr() << "\", "
 	   << " }";
 	return ss.str();
 }
@@ -194,7 +194,7 @@ list<model::ptr> variable::all(const string& form) {
 
 string variable::json() {
 	stringstream ss;
-	ss << name() << ": \""
+	ss << "\"" << name() << "\": \""
 	   << value() << "\"";
 	return ss.str();
 }

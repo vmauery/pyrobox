@@ -78,7 +78,6 @@ class JSON_Request: public Fastcgipp::Request<char>
 	}
 
 	bool json_response() {
-		here();
 		std::stringstream ss;
 		std::string response;
 		ss << "{\n";
@@ -94,15 +93,22 @@ class JSON_Request: public Fastcgipp::Request<char>
 				ss << f->submit(session.post);
 			} catch (form::does_not_exist e) {
 				// FIXME: form error path?
+				error("form file not found");
+			} catch (form::parse_error e) {
+				error("form parse error: " << e._msg << std::endl << e._lineno << ":" << e._line);
 			}
 		} else {
 			foreach(Fastcgipp::strmap, session.post, post) {
 				if (post->second == "form") {
 					try {
 						form::ptr f = form::create(post->first);
-						ss << f->render();
+						ss << "\"" << post->first << "\": {\"form\": "
+						   << f->render() << ", \"values\": "
+						   << f->render_values() << " }, \n";
 					} catch (form::does_not_exist e) {
 						ss << post->first << ": {form: {elements:[]}, values: {}, },\n";
+					} catch (std::exception ex) {
+						error("unknown exception caught!!");
 					}
 				} else if (post->second == "records") {
 					db_entries(ss, post->first);
@@ -340,7 +346,7 @@ class JSON_Request: public Fastcgipp::Request<char>
 		if (session.get.find("debug") != session.get.end()) {
 			debug();
 		}
-		if (session.headers["REQUEST_METHOD"] == "POST" && 
+		if (session.headers["REQUEST_METHOD"] == "POST" &&
 			session.headers["HTTP_ACCEPT"].find("application/json") != std::string::npos) {
 			return json_response();
 		}
@@ -351,8 +357,7 @@ class JSON_Request: public Fastcgipp::Request<char>
 			if (sendfile(filename->second))
 				return true;
 		}
-		
-		
+
 		if (session.get.find("test") != session.get.end()) {
 			return test_page();
 		}
@@ -474,7 +479,7 @@ int main(int argc, char **argv, char **env)
 			sockaddr.sin_family = AF_INET;
 			if (hostname) {
 				struct hostent *host = gethostbyname(hostname);
-				memcpy(&sockaddr.sin_addr, host->h_addr_list[0], host->h_length);   
+				memcpy(&sockaddr.sin_addr, host->h_addr_list[0], host->h_length);
 			} else {
 				sockaddr.sin_addr.s_addr = htonl(address);
 			}
