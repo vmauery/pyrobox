@@ -7,7 +7,35 @@
 
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/jquery.combobox.js"></script>
+<script type="text/javascript" src="/js/jquery.tablesorter.js"></script>
+<script type="text/javascript" src="/js/jquery.form.js"></script>
 <script type="text/javascript" src="/js/pyrobox.js"></script>
+
+<script type="text/javascript">
+(function($) {$(function() {
+
+var url = "/config/?json&debug";
+$.postJSON(url, {main_settings: "form"}, function(data) {
+		var rform = $.render_form(data.main_settings.form, data.main_settings.values);
+		$('#main-settings-form').html(rform);
+
+});
+
+var main_settings_form_options = {
+	url: "/config/?json&form_submit=main_settings&debug",
+	type: "POST",
+	dataType: "json",
+	success: function() {
+		$.msgbox("The settings were saved.");
+	},
+};
+$('#main-settings-form').submit(function() {
+	$(this).ajaxSubmit(main_settings_form_options);
+	return false;
+});
+
+}); })(jQuery);
+</script>
 
 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -71,12 +99,8 @@
 
 
 <h1>Settings</h1>
-<form method="post" id="main-settings-form">
-</form>
-
-
-
-
+<div id="main-settings-form">
+</div>
 
 
 </div>
@@ -84,7 +108,6 @@
 		<div id="blocks-post">
 		</div>
 		<!-- /center --></div><!-- /squeeze --></div></div></div>
-		<div id="sidebar-right" class="sidebar"></div>
 	<!-- /container --></div>
 <!-- /wrapper --></div>
 

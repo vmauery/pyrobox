@@ -7,7 +7,35 @@
 
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/jquery.combobox.js"></script>
+<script type="text/javascript" src="/js/jquery.tablesorter.js"></script>
+<script type="text/javascript" src="/js/jquery.form.js"></script>
 <script type="text/javascript" src="/js/pyrobox.js"></script>
+
+<script type="text/javascript">
+(function($) {$(function() {
+
+var url = "/config/?json&debug";
+$.postJSON(url, {network_lan: "form"}, function(data) {
+		var rform = $.render_form(data.network_lan.form, data.network_lan.values);
+		$('#network-lan-form').html(rform);
+
+});
+
+var network_lan_form_options = {
+	url: "/config/?json&form_submit=network_lan&debug",
+	type: "POST",
+	dataType: "json",
+	success: function() {
+		$.msgbox("The settings were saved.");
+	},
+};
+$('#network-lan-form').submit(function() {
+	$(this).ajaxSubmit(network_lan_form_options);
+	return false;
+});
+
+}); })(jQuery);
+</script>
 
 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -73,9 +101,8 @@
 <h1>LAN</h1>
 
 
-
-<form method="post" id="network-lan-form">
-</form>
+<div id="network-lan-form">
+</div>
 
 
 
@@ -87,7 +114,6 @@
 		<div id="blocks-post">
 		</div>
 		<!-- /center --></div><!-- /squeeze --></div></div></div>
-		<div id="sidebar-right" class="sidebar"></div>
 	<!-- /container --></div>
 <!-- /wrapper --></div>
 

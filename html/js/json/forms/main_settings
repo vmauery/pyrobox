@@ -1,0 +1,33 @@
+form:
+	name: main_settings
+	action: none
+	class: ajax json
+	elements:
+		password:
+			name: admin_password
+			label: Administration password
+		end: password
+		password:
+			name: admin_password_confirm
+			label: Confirm password
+		end: password
+		select:
+			name: auto_commit_timeout
+			label: Auto commit timeout
+			description: Automatically commit changes after this many minutes of activity.  Disabled means never automatically commit changes.  This will not automatically apply changes, it will only commit changes that have been applied already.
+			default_value: on
+			options:
+				0: Disabled
+				5: 5 minutes
+				10: 10 minutes
+				15: 15 minutes
+				30: 30 minutes
+			end: options
+		end: select
+		submit:
+			name: submit
+			value: Save
+		end: submit
+	end: elements
+end: form
+

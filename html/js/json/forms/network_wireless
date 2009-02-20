@@ -1,0 +1,64 @@
+form:
+	name: network_wireless
+	action: none
+	class: ajax json
+	elements:
+		radios:
+			name: wireless_radio
+			label: Wireless radio
+			description: Select 'on' for the wireless radio to be enabled.
+			default_value: on
+			options:
+				on: On
+				off: Off
+			end: options
+		end: radios
+		select:
+			name: wireless_channel
+			label: Channel
+			description: You can either select a channel for the radio or let it auto select.  Auto select is recommended so the radio can choose a channel that has less interference on it.
+			default_value: 0
+			options:
+				0: Auto select
+				1: 1
+				2: 2
+				3: 3
+				4: 4
+				5: 5
+				6: 6
+				7: 7
+				8: 8
+				9: 9
+				10: 10
+				11: 11
+				12: 12
+			end: options
+		end: select
+		textbox:
+			name: wireless_ssid
+			label: SSID
+			description: Select a string of up to 32 characters that will be unique in your area.  The SSID is case sensitive and can contain spaces.
+		end: textbox
+		checkbox:
+			name: wireless_ssid_broadcast
+			label: Broadcast SSID
+			description: For security sake, not broadcasting the SSID is the first line of defense against intruders.  This alone, however is not enough to deter a determined cracker.  If your wireless computers will work with broadcast disabled, it is recommended to disable it.
+		end: checkbox
+		select:
+			name: wireless_authentication
+			label: Authentication
+			description: None of these choices are implemented, so it doesn't really matter what you choose.
+			default_value: wpa
+			options:
+				none: Open system
+				wep: WEP
+				wpa: WPA
+				wpa_psk: WPA-PSK
+			end: options
+		end: select
+		submit:
+			name: submit
+			value: Save
+		end: submit
+	end: elements
+end: form

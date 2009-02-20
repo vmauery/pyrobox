@@ -7,7 +7,35 @@
 
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/jquery.combobox.js"></script>
+<script type="text/javascript" src="/js/jquery.tablesorter.js"></script>
+<script type="text/javascript" src="/js/jquery.form.js"></script>
 <script type="text/javascript" src="/js/pyrobox.js"></script>
+
+<script type="text/javascript">
+(function($) {$(function() {
+
+var url = "/config/?json&debug";
+$.postJSON(url, {firewall_settings: "form"}, function(data) {
+		var rform = $.render_form(data.firewall_settings.form, data.firewall_settings.values);
+		$('#firewall-settings-form').html(rform);
+
+});
+
+var firewall_settings_form_options = {
+	url: "/config/?json&form_submit=firewall_settings&debug",
+	type: "POST",
+	dataType: "json",
+	success: function() {
+		$.msgbox("The settings were saved.");
+	},
+};
+$('#firewall-settings-form').submit(function() {
+	$(this).ajaxSubmit(firewall_settings_form_options);
+	return false;
+});
+
+}); })(jQuery);
+</script>
 
 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -70,10 +98,8 @@
 
 
 <h1>Firewall</h1>
-
-
-<form method="post" id="firewall-form">
-</form>
+<div id="firewall-settings-form">
+</div>
 
 
 </div>
@@ -81,7 +107,6 @@
 		<div id="blocks-post">
 		</div>
 		<!-- /center --></div><!-- /squeeze --></div></div></div>
-		<div id="sidebar-right" class="sidebar"></div>
 	<!-- /container --></div>
 <!-- /wrapper --></div>
 

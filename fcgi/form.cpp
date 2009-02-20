@@ -81,7 +81,7 @@ string form_base::render_attrs() const {
 	return ss.str();
 }
 
-form_base::ptr form_base::factory(const std::string& type, const strmap& attrs, const strmap& options) {
+form_base::ptr form_base::factory(const std::string& type, const strmap& attrs, const pairlist& options) {
 	if (type == "form")
 		return form::create(attrs);
 	if (type == "button")
@@ -237,7 +237,7 @@ string multiple_choice::render() const {
 	   << ", \"options\": [\n";
 
 	// render all the children
-	strmap::const_iterator i = _options.begin();
+	pairlist::const_iterator i = _options.begin();
 	while (i != _options.end()) {
 		ss << "{\"label\":\"" << i->second << "\", \"value\":\"" << i->first << "\"}";
 		if (++i != _options.end()) {
@@ -257,7 +257,7 @@ bool multiple_choice::valid() const {
 /*
  * select class functions
  */
-select::ptr select::create(const strmap& attrs, const strmap& options) {
+select::ptr select::create(const strmap& attrs, const pairlist& options) {
 	select::ptr ret(new select(attrs, options));
 	return ret;
 }
@@ -265,7 +265,7 @@ select::ptr select::create(const strmap& attrs, const strmap& options) {
 /*
  * combobox class functions
  */
-combobox::ptr combobox::create(const strmap& attrs, const strmap& options) {
+combobox::ptr combobox::create(const strmap& attrs, const pairlist& options) {
 	combobox::ptr ret(new combobox(attrs, options));
 	return ret;
 }
@@ -274,7 +274,7 @@ combobox::ptr combobox::create(const strmap& attrs, const strmap& options) {
 /*
  * radios class functions
  */
-radios::ptr radios::create(const strmap& attrs, const strmap& options) {
+radios::ptr radios::create(const strmap& attrs, const pairlist& options) {
 	radios::ptr ret(new radios(attrs, options));
 	return ret;
 }
@@ -296,7 +296,7 @@ bool checkbox::valid() const {
 /*
  * checkboxes class functions
  */
-checkboxes::ptr checkboxes::create(const strmap& attrs, const strmap& options) {
+checkboxes::ptr checkboxes::create(const strmap& attrs, const pairlist& options) {
 	checkboxes::ptr ret(new checkboxes(attrs, options));
 	return ret;
 }
@@ -340,7 +340,6 @@ form::ptr form::create(const string& name) {
 	}
 	form::ptr root;
 
-	strmap attrs, options;
 	char *cline = new char[4096];
 	string line;
 	int lineno = 0;
@@ -380,7 +379,7 @@ info("name is '"<<name<<"'");
 				pstack.push_back(fset);
 			} else {
 				try {
-					fel = form_base::factory(name, attrs, options);
+					fel = form_base::factory(name);
 					info("new " << name << " element (" << fel.get() << ")");
 				} catch (form::invalid_type e) {
 					//throw parse_error("invalid type", cline, lineno);
@@ -413,7 +412,6 @@ info("name is '"<<name<<"'");
 				pstack.pop_back();
 			}
 			stack.pop_back();
-			attrs.clear();
 			// read a line
 			continue;
 		}
@@ -438,7 +436,8 @@ form::ptr form::create(const strmap& attrs) {
 string form::render_values() const {
 	stringstream ss;
 	list<model::ptr>::iterator rowiter;
-	list<model::ptr> models = variable::all(name());
+	list<model::ptr> models = variable::all(realm());
+	info("render_values for " << realm());
 	ss << "{\n";
 	for (rowiter=models.begin(); rowiter!=models.end(); ) {
 		ss << (*rowiter)->json();
@@ -455,9 +454,10 @@ string form::submit(const strmap& post) const {
 	stringstream ss;
 	info("form::submit(" << name() << ")");
 	strmap validated = validate(post);
+	string form_realm = realm();
 
 	for (strmap::const_iterator i=validated.begin(); i!=validated.end(); i++) {
-		variable::set(name(), i->first, i->second);
+		variable::set(form_realm, i->first, i->second);
 	}
 	return ss.str();
 }
@@ -468,3 +468,11 @@ strmap form::validate(const map<string,string>& values) const {
 	// validate valid names against validators specified by json text
 	return valid_values;
 }
+
+string form::realm() const {
+	strmap::const_iterator _realm = _attrs.find("realm");
+	if (_realm != _attrs.end())
+		return _realm->second;
+	return name();
+}
+

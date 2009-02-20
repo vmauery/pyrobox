@@ -7,23 +7,60 @@
 
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/jquery.combobox.js"></script>
+<script type="text/javascript" src="/js/jquery.tablesorter.js"></script>
+<script type="text/javascript" src="/js/jquery.form.js"></script>
 <script type="text/javascript" src="/js/pyrobox.js"></script>
 
-<script type="text/javascript"><!--//
+<script type="text/javascript">
+var wan_forms = {};
+var network_wan_form = '';
+
 (function($) {$(function() {
-// on load stuff goes here
+
+var url = "/config/?json&debug";
+$.postJSON(url, 
+			{
+				network_wan_static: "form",
+				network_wan_dhcp: "form",
+				network_wan_pppoe: "form",
+			},
+	function(data) {
+		network_wan_form = data.network_wan_static.values.wan_address_method;
+		if (network_wan_form == null)
+			network_wan_form = "static";
+		wan_forms.network_wan_static = $.render_form(
+				data.network_wan_static.form, data.network_wan_static.values);
+		wan_forms.network_wan_dhcp = $.render_form(
+				data.network_wan_dhcp.form, data.network_wan_dhcp.values);
+		wan_forms.network_wan_pppoe = $.render_form(
+				data.network_wan_pppoe.form, data.network_wan_pppoe.values);
+		$('#network-wan-form').html(wan_forms["network_wan_"+network_wan_form]);
+		address_method_change();
+	}
+);
+
+var network_wan_form_options = {
+	type: "POST",
+	dataType: "json",
+	success: function() {
+		$.msgbox("The settings were saved.");
+	},
+};
+$('#network-wan-form').submit(function() {
+	network_wan_form_options.url = "/config/?json&form_submit=network_wan_"+network_wan_form+"&debug";
+	$(this).ajaxSubmit(network_wan_form_options);
+	return false;
+});
 
 // set up show/hide for address methods based on address_method.changed
 function address_method_change() {
 	$("#id_wan_address_method").change(function() {
-		var val = $(this).val();
-		$.post("/network/wan", {subform:1, wan_address_method:val}, function(data, textStatus) {
-			$("#network-wan-form").replaceWith(data);
-			address_method_change();
-		});
+		network_wan_form = $(this).val();
+		$("#network-wan-form").html(wan_forms["network_wan_"+network_wan_form]);
+		$('#id_wan_address_method').val(network_wan_form);
+		address_method_change();
 	});
 }
-address_method_change();
 
 }); })(jQuery);
 //--!>
@@ -38,28 +75,28 @@ address_method_change();
 	<div id="container" class="clear-block">
 		<div id="header">
 			<div id="logo-floater"><h1><a href="/"><img src="/theme/flames/images/logo.png" alt="" title=""  /><span>.-~::PyroBox::~-.</span></a></h1></div>
-			
+
 			<ul class="links primary-links">
 				<li><a href="/settings" class="">Settings</a></li>
 				<li><a href="/firewall" class="">Firewall</a></li>
 				<li><a href="/" class="">Information</a></li>
 				<li><a href="/network" class="active">Network</a></li>
-				
+
 			</ul>
-			
-			
+
+
 			<ul class="links secondary-links">
 				<li><a href="/network/wireless" class="">Wireless</a></li>
 				<li><a href="/network/wan" class="active">WAN</a></li>
 				<li><a href="/network/lan" class="">LAN</a></li>
-				
+
 			</ul>
-			
+
 		</div><!-- /header -->
 		<div id="sidebar-left" class="sidebar">
-		
+
 			<div class="block clear-block block-status-change">
-			
+
 
 <div class="content">
 <h2>Change Status</h2>
@@ -70,7 +107,7 @@ address_method_change();
 
 
 			</div>
-		
+
 		</div>
 		<div id="center"><div id="squeeze"><div class="right-corner"><div class="left-corner">
 <div class="breadcrumb"><a href="/">Home</a> &raquo; <a href="/network">Network</a> &raquo; <a href="/network/wan">WAN</a></div>
@@ -90,8 +127,8 @@ address_method_change();
 
 
 <h1>WAN</h1>
-<form method="post" id="network-wan-form">
-</form>
+<div id="network-wan-form">
+</div>
 
 
 
@@ -100,7 +137,6 @@ address_method_change();
 		<div id="blocks-post">
 		</div>
 		<!-- /center --></div><!-- /squeeze --></div></div></div>
-		<div id="sidebar-right" class="sidebar"></div>
 	<!-- /container --></div>
 <!-- /wrapper --></div>
 

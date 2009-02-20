@@ -8,8 +8,10 @@
 #include <sstream>
 #include <map>
 #include <vector>
+#include <utility>
 
 typedef std::map<std::string,std::string> strmap;
+typedef std::vector<std::pair<std::string,std::string> > pairlist;
 
 class form_set;
 class form_base {
@@ -71,7 +73,7 @@ class form_base {
 		}
 		virtual bool valid() const = 0;
 		virtual std::string render() const = 0;
-		static ptr factory(const std::string& type, const strmap& attrs=strmap(), const strmap& options=strmap());
+		static ptr factory(const std::string& type, const strmap& attrs=strmap(), const pairlist& options=pairlist());
 };
 
 class form_element : public form_base {
@@ -204,16 +206,16 @@ class multiple_choice : public form_element {
 		typedef boost::shared_ptr<multiple_choice> ptr;
 
 	protected:
-		multiple_choice(form_element_type type, const strmap& attrs, const strmap& options) : form_element(type, attrs), _options(options) {}
+		multiple_choice(form_element_type type, const strmap& attrs, const pairlist& options) : form_element(type, attrs), _options(options) {}
 
-		strmap _options;
+		pairlist _options;
 
 	public:
 		virtual ~multiple_choice() {}
 		virtual std::string render() const;
 		virtual bool valid() const;
 		virtual void option(const std::string& n, const std::string& v) {
-			_options[n] = v;
+			_options.push_back(std::pair<std::string,std::string>(n, v));
 		}
 };
 
@@ -222,11 +224,11 @@ class select : public multiple_choice {
 		typedef boost::shared_ptr<select> ptr;
 
 	protected:
-		select(const strmap& attrs, const strmap& options) : multiple_choice(t_select, attrs, options) {}
+		select(const strmap& attrs, const pairlist& options) : multiple_choice(t_select, attrs, options) {}
 		bool multi_;
 
 	public:
-		static ptr create(const strmap& attrs=strmap(), const strmap& options=strmap());
+		static ptr create(const strmap& attrs=strmap(), const pairlist& options=pairlist());
 		virtual ~select() {}
 };
 
@@ -235,10 +237,10 @@ class radios : public multiple_choice {
 		typedef boost::shared_ptr<radios> ptr;
 
 	protected:
-		radios(const strmap& attrs, const strmap& options) : multiple_choice(t_radios, attrs, options) {}
+		radios(const strmap& attrs, const pairlist& options) : multiple_choice(t_radios, attrs, options) {}
 
 	public:
-		static ptr create(const strmap& attrs=strmap(), const strmap& options=strmap());
+		static ptr create(const strmap& attrs=strmap(), const pairlist& options=pairlist());
 		virtual ~radios() {}
 };
 
@@ -247,10 +249,10 @@ class combobox : public multiple_choice {
 		typedef boost::shared_ptr<combobox> ptr;
 
 	protected:
-		combobox(const strmap& attrs, const strmap& options) : multiple_choice(t_combobox, attrs, options) {}
+		combobox(const strmap& attrs, const pairlist& options) : multiple_choice(t_combobox, attrs, options) {}
 
 	public:
-		static ptr create(const strmap& attrs=strmap(), const strmap& options=strmap());
+		static ptr create(const strmap& attrs=strmap(), const pairlist& options=pairlist());
 		virtual ~combobox() {}
 };
 
@@ -272,10 +274,10 @@ class checkboxes : public multiple_choice {
 		typedef boost::shared_ptr<checkboxes> ptr;
 
 	protected:
-		checkboxes(const strmap& attrs, const strmap& options) : multiple_choice(t_checkboxes, attrs, options) {}
+		checkboxes(const strmap& attrs, const pairlist& options) : multiple_choice(t_checkboxes, attrs, options) {}
 
 	public:
-		static ptr create(const strmap& attrs=strmap(), const strmap& options=strmap());
+		static ptr create(const strmap& attrs=strmap(), const pairlist& options=pairlist());
 		virtual ~checkboxes() {}
 };
 
@@ -331,6 +333,11 @@ class form : public form_set {
 
 		std::string submit(const strmap& post) const;
 		std::string render_values() const;
+
+		// normally a realm is the form's name, but in some cases
+		// for multipart form or dynamic forms, it is possible for
+		// several forms to be stored in the same variable realm
+		std::string realm() const;
 
 	protected:
 		form(const strmap& attrs) : form_set(t_form, attrs) {}

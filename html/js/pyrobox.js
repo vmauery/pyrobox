@@ -193,6 +193,20 @@ function is_object(obj) {
 	js_links();
 	row_hover();
 
+	var msg_id = 0;
+	$.msgbox = function(msg, level) {
+		if (level == null)
+			level = 'info';
+		msg_id++;
+		var id = '#msg-'+msg_id;
+		$('#content').prepend('<div class="message '+level+'"id="msg-'+msg_id+'">'+msg+'</div>');
+		$('#msg-'+msg_id).show('fast', function() {
+			setTimeout(function() {$(id).hide('slow');}, 5000);
+		}).click(function() {
+			$(this).hide('fast');
+		});
+	};
+
 	function arr_to_obj(a) {
 		var o = {};
 		for(var i=0;i<a.length;i++) {
@@ -261,7 +275,7 @@ function is_object(obj) {
 	}
 
 	$.render_form = function(form, values) {
-		$.log($.dump(values));
+		//$.log($.dump(values));
 		if (typeof form == 'array' && values == null) {
 			values = form[1];
 			form = form[0];
@@ -350,7 +364,7 @@ function is_object(obj) {
 		element_common(el, attributes);
 		return '<div class="field-item">\n'+
 			'<div class="label"><label for="'+el.id+'">'+el.label+'</label><div class="description">'+el.description+'</div></div>\n'+
-			'<select name="'+el.name+'">\n'+
+			'<select name="'+el.name+'" id="'+el.id+'">\n'+
 			render_select_options(el) +
 			'</select><span class="error"></span>\n</div>';
 	};
