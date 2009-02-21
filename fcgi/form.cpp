@@ -462,9 +462,21 @@ string form::submit(const strmap& post) const {
 	return ss.str();
 }
 
-strmap form::validate(const map<string,string>& values) const {
-	strmap valid_values = values;
+strmap form::validate(const strmap& values) const {
+	strmap valid_values;
 	// filter posted values for valid names
+	std::vector<form_base::ptr>::const_iterator i = _children.begin();
+	for (; i!=_children.end(); i++) {
+		string n = (*i)->name();
+		strmap::const_iterator v;
+		if ((v = values.find(n)) != values.end()) {
+			valid_values[n] = v->second;
+		} else if ((*i)->type() == t_checkbox) {
+			// possibly add names that weren't posted (checkboxes)
+			valid_values[n] = "";
+		}
+	}
+
 	// validate valid names against validators specified by json text
 	return valid_values;
 }

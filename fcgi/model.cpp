@@ -64,7 +64,7 @@ bool model::save() {
 			if (++i == _names.end()) break;
 			ss << ", ";
 		}
-		ss << "WHERE id=" << _values["id"];
+		ss << " WHERE id=" << _values["id"];
 		_db->execute(ss.str());
 	} else {
 		// insert

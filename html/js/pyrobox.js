@@ -321,9 +321,13 @@ function is_object(obj) {
 	$.render_checkbox = function(el) {
 		var attributes = [];
 		element_common(el, attributes);
+		if (!el.check_value) {
+			el.check_value = '1';
+		}
+		checked = (el.value == el.check_value) ? 'checked="checked" ' : '';
 		return '<div class="field-item">\n'+
 			'\t<div class="label"><label for="'+el.id+'">'+el.label+'</label><div class="description">'+el.description+'</div></div>\n'+
-			'\t<span class="edit"><input type="checkbox" name="'+el.name+'" id="'+el.id+'" value="'+el.value+'" '+render_attributes(el)+'/></span><span class="error"></span>\n</div>\n';
+			'\t<span class="edit"><input type="checkbox" name="'+el.name+'" id="'+el.id+'" value="'+el.check_value+'" '+checked+render_attributes(el)+'/></span><span class="error"></span>\n</div>\n';
 	};
 
 	function render_radio_options(el) {

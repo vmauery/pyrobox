@@ -56,8 +56,6 @@ class form_base {
 		}
 
 		std::string render_attrs() const;
-		form_element_type type() const { return _type; }
-		const char* type_name() const;
 
 	public:
 		virtual ~form_base() {}
@@ -73,6 +71,8 @@ class form_base {
 		}
 		virtual bool valid() const = 0;
 		virtual std::string render() const = 0;
+		form_element_type type() const { return _type; }
+		const char* type_name() const;
 		static ptr factory(const std::string& type, const strmap& attrs=strmap(), const pairlist& options=pairlist());
 };
 
