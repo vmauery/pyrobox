@@ -768,6 +768,15 @@ a.delete {
 a.edit {
 	padding-left:12px; margin-right:10px; background:url(icons/icon_changelink.gif) 0 .2em no-repeat;
 }
+a.cancel {
+	padding-left:12px; margin-right:10px; background:url(icons/icon_deletelink.gif) 0 .2em no-repeat;
+}
+a.save {
+	padding-left:12px; margin-right:10px; background:url(icons/icon_addlink.gif) 0 .2em no-repeat;
+}
+a.add {
+	padding-left:12px; margin-right:10px; background:url(icons/icon_addlink.gif) 0 .2em no-repeat; float: right;
+}
 input[type=submit], input[type=button], .submit-row input { background:white url(icons/nav-bg.gif) bottom repeat-x; padding:3px; color:black; border:1px solid #bbb; border-color:#ddd #aaa #aaa #ddd; }
 input[type=submit]:active, input[type=button]:active { background-image:url(icons/nav-bg-reverse.gif); background-position:top; }
 input[type=submit].default, .submit-row input.default { border:2px solid #5b80b2; background:#7CA0C7 url(icons/default-bg.gif) bottom repeat-x; font-weight:bold; color:white; }

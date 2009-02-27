@@ -57,24 +57,20 @@ using std::basic_string;
 
 class JSON_Request: public Fastcgipp::Request<char>
 {
-	std::stringstream& db_entries(std::stringstream& ss, const std::string& type) {
+	std::string db_entries(const std::string& type) {
 		here();
+		std::stringstream ss;
 		std::list<model::ptr>::iterator rowiter;
 		std::list<model::ptr> models = model::fetch_all(type);
-		ss << type << ": [\n";
+		ss << "{\n";
 		for (rowiter=models.begin(); rowiter!=models.end(); ) {
-			ss << (*rowiter)->json();
+			ss << (*rowiter)->id() << ": " << (*rowiter)->json();
 			if (++rowiter != models.end()) {
 				ss << ",\n";
 			}
 		}
-		ss << "\n],\n";
-		return ss;
-	}
-
-	std::stringstream& form_response(std::stringstream& ss, const std::string& form_name) {
-		here();
-		return ss;
+		ss << "\n},\n";
+		return ss.str();
 	}
 
 	bool json_response() {
@@ -87,7 +83,24 @@ class JSON_Request: public Fastcgipp::Request<char>
 		{
 			info(it->first << ": " << it->second);
 		}
-		if ((it = session.get.find("form_submit")) != session.get.end()) {
+		if ((it = session.get.find("row_submit")) != session.get.end()) {
+			if ((it = session.post.find("table")) != session.post.end()) {
+				try {
+					form::ptr f = form::create(it->second);
+					ss << f->submit(session.post);
+				} catch (form::does_not_exist e) {
+					// FIXME: form error path?
+					error("form file not found");
+				} catch (form::parse_error e) {
+					error("form parse error: " << e._msg << std::endl << e._lineno << ":" << e._line);
+				}
+			}
+		} else if ((it = session.get.find("row_delete")) != session.get.end()) {
+			if ((it = session.post.find("table")) != session.post.end()) {
+				model::ptr m = model::factory(it->second, session.post);
+				m->delete_row();
+			}
+		} else if ((it = session.get.find("form_submit")) != session.get.end()) {
 			try {
 				form::ptr f = form::create(it->second);
 				ss << f->submit(session.post);
@@ -111,7 +124,16 @@ class JSON_Request: public Fastcgipp::Request<char>
 						error("unknown exception caught!!");
 					}
 				} else if (post->second == "records") {
-					db_entries(ss, post->first);
+					try {
+						form::ptr f = form::create(post->first);
+						ss << "\"" << post->first << "\": { \"records\": "
+						   << db_entries(post->first)
+						   << "\"form\": " << f->render() << "},\n";
+					} catch (form::does_not_exist e) {
+						ss << post->first << ": {form: {elements:[]}, values: {}, },\n";
+					} catch (std::exception ex) {
+						error("unknown exception caught!!");
+					}
 				}
 			}
 		}

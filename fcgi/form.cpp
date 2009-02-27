@@ -65,6 +65,7 @@ const char* form_base::type_name() const {
 			"checkboxes",
 			"hidden",
 			"file",
+			"model",
 		};
 	if (_type < form_base::element_count && _type > 0)
 		return _type_names[_type];
@@ -108,6 +109,8 @@ form_base::ptr form_base::factory(const std::string& type, const strmap& attrs, 
 		return hidden::create(attrs);
 	if (type == "file")
 		return file::create(attrs);
+	if (type == "model")
+		return model_form::create(attrs);
 	//throw form_base::invalid_type(type);
 	error("invalid type: "<<type);
 	return form_base::ptr();
@@ -335,7 +338,7 @@ form::ptr form::create(const string& name) {
 	ifstream form_file;
 	form_file.open(form_file_name.c_str(), ios::binary);
 	if (!form_file) {
-		//throw form::does_not_exist(name);
+		throw form::does_not_exist(name);
 		error("form does not exist: " << name);
 	}
 	form::ptr root;
@@ -346,7 +349,7 @@ form::ptr form::create(const string& name) {
 	deque<string> stack;
 	deque<form_set::ptr> pstack;
 	form_base::ptr fel;
-	while (!form_file.eof()) {
+	while (form_file && !form_file.eof()) {
 		form_file.getline(cline, 4096);
 info("parsing line: " << cline);
 		lineno++;
@@ -355,7 +358,7 @@ info("parsing line: " << cline);
 		if (tok == string::npos) {
 			if (line.length() == 0 || line[0] == '#')
 				continue;
-			//throw parse_error("line without a ':'", cline, lineno);
+			throw parse_error("line without a ':'", cline, lineno);
 			error("parse error");
 		}
 		string value, name = trim(line.substr(0, tok));
@@ -373,7 +376,7 @@ info("name is '"<<name<<"'");
 				// try a cast to a form_set
 				form_set::ptr fset = boost::dynamic_pointer_cast<form_set>(fel);
 				if (!fset) {
-					//throw parse_error("element tag not valid here", cline, lineno);
+					throw parse_error("element tag not valid here", cline, lineno);
 			error("parse error");
 				}
 				pstack.push_back(fset);
@@ -382,19 +385,19 @@ info("name is '"<<name<<"'");
 					fel = form_base::factory(name);
 					info("new " << name << " element (" << fel.get() << ")");
 				} catch (form::invalid_type e) {
-					//throw parse_error("invalid type", cline, lineno);
+					throw parse_error("invalid type", cline, lineno);
 					error("parse error");
 				}
 				if (!root) {
 					if (!(root = boost::dynamic_pointer_cast<form>(fel)))
-						//throw parse_error("form not root element", cline, lineno);
+						throw parse_error("form not root element", cline, lineno);
 						error("parse error");
 				} else {
 					if (!pstack.empty()) {
 						fel->parent(pstack.back());
 						pstack.back()->add(fel);
 					} else {
-						//throw parse_error("child element not wrapped in 'elements' tag", cline, lineno);
+						throw parse_error("child element not wrapped in 'elements' tag", cline, lineno);
 						error("parse error");
 					}
 				}
@@ -404,7 +407,7 @@ info("name is '"<<name<<"'");
 		}
 		if (name == "end") {
 			if (stack.back() != value) {
-				//throw parse_error("non-matching end block", cline, lineno);
+				throw parse_error("non-matching end block", cline, lineno);
 				error("parse error");
 			}
 			if (value == "elements") {
@@ -486,5 +489,21 @@ string form::realm() const {
 	if (_realm != _attrs.end())
 		return _realm->second;
 	return name();
+}
+
+string model_form::submit(const strmap& post) const {
+	stringstream ss;
+	info("form::submit(" << name() << ")");
+	strmap validated = validate(post);
+	model::ptr mod = model::factory(name(), validated);
+	if (mod->save()) {
+		ss << "\"submitted\": " << mod->json() << "\n";
+	}
+	return ss.str();
+}
+
+model_form::ptr model_form::create(const strmap& attrs) {
+	model_form::ptr ret(new model_form(attrs));
+	return ret;
 }
 

@@ -1,0 +1,21 @@
+model:
+	name: deny_dhcp
+	id: deny-dhcp-form
+	action: none
+	actions: edit delete
+	class: ajax json
+	elements:
+		hidden:
+			name: id
+		end: hidden
+		textbox:
+			name: mac_addr
+			label: MAC Address
+		end: textbox
+		textbox:
+			name: hostname
+			label: Hostname
+		end: textbox
+	end: elements
+end: model
+

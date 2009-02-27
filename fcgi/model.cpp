@@ -48,7 +48,21 @@ list<model::ptr> model::fetch_all(const string& type) {
 	if (type == "static_dhcp") {
 		return static_dhcp::all();
 	}
+	if (type == "deny_dhcp") {
+		return deny_dhcp::all();
+	}
 	return list<model::ptr>();
+}
+
+model::ptr model::factory(const string& type, const db::Result& vals) {
+
+	if (type == "static_dhcp") {
+		return static_dhcp::create(vals);
+	}
+	if (type == "deny_dhcp") {
+		return deny_dhcp::create(vals);
+	}
+	return model::ptr();
 }
 
 bool model::save() {
@@ -90,6 +104,20 @@ bool model::save() {
 		sprintf(idstr, "%ld", id);
 		_values["id"] = idstr;
 	}
+	return true;
+}
+bool model::delete_row() {
+	const vector<string>& _names = this->names();
+	stringstream ss;
+	if (id()) {
+		// update
+		ss << "DELETE FROM " << table_name()
+		   << " WHERE id=" << _values["id"];
+		_db->execute(ss.str());
+	} else {
+		return false;
+	}
+	return true;
 }
 
 vector<string> model::values() const {
@@ -117,6 +145,13 @@ list<model::ptr> model_class::all() {                           \
 	return ret;                                                      \
 }
 
+// template<class model_class>::create(const db::Result& vals)
+#define model_create(model_class)                                        \
+model_class::ptr model_class::create(const db::Result& vals) {     \
+	model_class::ptr ret(new model_class(vals));                   \
+	return ret;                                                    \
+}
+
 
 //////////////////////////////////////////////////////////////////////////
 // class static_dhcp
@@ -135,6 +170,7 @@ const vector<string>& static_dhcp::names() const {
 }
 
 model_all(static_dhcp)
+model_create(static_dhcp)
 
 string static_dhcp::json() {
 	stringstream ss;
@@ -143,6 +179,35 @@ string static_dhcp::json() {
 	   << "\"hostname\": \"" << hostname() << "\", "
 	   << "\"ip_addr\": \"" << ip_addr() << "\", "
 	   << "\"mac_addr\": \"" << mac_addr() << "\", "
+	   << " }";
+	return ss.str();
+}
+
+
+//////////////////////////////////////////////////////////////////////////
+// class deny_dhcp
+/////////////////////////////////////////////////////////////////////////
+const char deny_dhcp::_table_name[] = "app_denydhcp";
+
+const vector<string>& deny_dhcp::names() const {
+	static vector<string> _names;
+	if (_names.size() == 0) {
+		_names.push_back("id");
+		_names.push_back("mac_addr");
+		_names.push_back("hostname");
+	}
+	return _names;
+}
+
+model_all(deny_dhcp)
+model_create(deny_dhcp)
+
+string deny_dhcp::json() {
+	stringstream ss;
+	ss << "{ "
+	   << "\"id\": " << id() << ", "
+	   << "\"mac_addr\": \"" << mac_addr() << "\", "
+	   << "\"hostname\": \"" << hostname() << "\", "
 	   << " }";
 	return ss.str();
 }

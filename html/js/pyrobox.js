@@ -52,27 +52,36 @@ function is_object(obj) {
 
 	function _dump(v, level) {
 		var dumped_text = "";
-		if(!level) level = 0;
+		if (!level) level = 0;
 
 		//The padding given at the beginning of the line.
 		var level_padding = "";
-		for(var j=0;j<level+1;j++) level_padding += "    ";
+		for (var j=0;j<level+1;j++) level_padding += "    ";
+		if (level > 3) {
+			return level_padding+"...\n";
+		}
 
 		if (is_object(v)) {
 			dumped_text += level_padding+"{\n";
 		} else if (is_array(v)) {
 			dumped_text += level_padding+"[\n";
 		}
-		if(typeof v == "object") { //Array/Hashes/Objects 
+		if (typeof v == "object") { //Array/Hashes/Objects 
+			try {
 			for(var item in v) {
-				var value = v[item];
+				var value;
+					value = v[item];
 
-				if(typeof value == "object") { // not scalar
+				if (typeof value == "object") { // not scalar
 					dumped_text += level_padding + "'" + item + "':\n";
 					dumped_text += _dump(value,level+1);
 				} else {
 					dumped_text += level_padding + "'" + item + "' => \"" + value + "\"\n";
 				}
+			}
+			} catch (err) {
+				dumped_text += "<ERROR dumping object...>\n";
+				return dumped_text;
 			}
 		} else { //Strings/Chars/Numbers etc.
 			return v+"\n";
@@ -100,16 +109,6 @@ function is_object(obj) {
 	};
 
 /* common dynamic forms code */
-	function js_links() {
-		/* set the on click for delete links */
-		$(".jslink").filter(".delete").unbind('click').click(function() {
-			delete_row(this);
-		});
-		/* set the on click for edit links */
-		$(".jslink").filter(".edit").unbind('click').click(function() {
-			edit_row(this);
-		});
-	}
 	function row_hover() {
 		$("tr").filter(".edit").each(function() {
 			$(this).children().not(":last").unbind('click').click(function() {
@@ -118,77 +117,6 @@ function is_object(obj) {
 		});
 	}
 	/* remove a row from the table of rows */
-	function delete_row(obj) {
-		var $row = $(obj).parent().parent();
-		var row = '';
-		id = $(obj).attr("id").replace(/delete_([0-9]+)_.*/, '$1');
-		var table = $(obj).attr("id").replace(/delete_([0-9]+)_(.*)/, '$2');
-		$.post(url, {'delete':id, 'table':table}, function(data, textStatus) {
-			if (textStatus == "success") {
-				$row.remove();
-			}
-		});
-	}
-	/* add an edit form for editing rows in place */
-	function edit_row(obj) {
-		var $row = $(obj).parents("tr").eq(0);
-		var form_el_id = $(obj).attr('id').replace(/row_\d+-(.*)/, '#id_$1');
-		var row = '';
-		id = $(obj).attr("id").replace(/row_([0-9]+)-.*/, '$1');
-		var table = $(obj).attr("id").replace(/row_([0-9]+)-(.*)/, '$2');
-		$.post(url, {'edit':id, 'table':table}, function(data, textStatus) {
-			if (textStatus == "success") {
-				$row.after(data);
-				$row.hide();
-				$(".combobox").combobox();
-				var $form = $("#form_"+id);
-				var $selected = $form.find(form_el_id);
-				$selected.trigger('focus');
-				$("#cancel_"+id).click(function() {
-					$form.remove();
-					$row.show();
-				});
-				function post_em(element) {
-					/* gather the form elements and post them */
-					var values = {'id':id, 'table':table}
-					var v = "";
-					$(element).parents("#form_"+id).children().children().each(function() {
-						if (this.type == 'button') return;
-						if ($(this).attr('class') == 'combobox-wrapper') {
-							$(this).children().each(function() {
-								values[this.name] = $(this).val();
-								v = v + "values["+this.name+"] = "+$(this).val() + "\n";
-							});
-						} else {
-							values[this.name] = $(this).val();
-							v = v + "values["+this.name+"] = "+$(this).val() + "\n";
-						}
-					});
-					
-					$.post(url, values, function(data, textStatus) {
-						$form.remove();
-						$row.after(data);
-						$row.remove();
-						$(".combobox").combobox();
-						/* set the on click for edit and delete links */
-						js_links();
-						row_hover();
-					});
-				}
-				$("#save_"+id).click(function() { post_em(this); });
-				$form.children().keypress(function(e) {
-					if (e.keyCode == 27) {
-						$form.remove();
-						$row.show();
-					} else if (e.keyCode == 13) {
-						$(this).trigger('change');
-						post_em(this);
-					}
-					return true;
-				});
-			}
-		});
-	}
 	$(".combobox").combobox();
 	js_links();
 	row_hover();
@@ -291,9 +219,12 @@ function is_object(obj) {
 		return '<fieldset '+render_attributes(el)+'><legend>'+el.label+'</legend>\n'+render_children(el.elements, el.value)+'</fieldset>\n';
 	};
 
-	$.render_textbox = function(el) {
+	$.render_textbox = function(el, input_only) {
 		var attributes = ["maxlength", ];
 		element_common(el, attributes);
+		if (input_only != null && input_only) {
+			return '<input name="'+el.name+'" id="'+el.id+'" type="text" value="'+el.value+'" '+render_attributes(el)+'/>';
+		}
 		return '<div class="field-item">\n'+
 			'\t<div class="label"><label for="'+el.id+'">'+el.label+'</label><div class="description">'+el.description+'</div></div>\n'+
 
@@ -411,6 +342,271 @@ function is_object(obj) {
 		element_common(el, attributes);
 		return '<input type="hidden" name="'+el.name+'" id="'+el.id+'" value="'+el.value+'"/>\n';
 	};
+
+
+
+
+
+
+
+
+	/* generic table handling functions */
+	var form_or_td_extraction = function(node)  {
+		if (node.childNodes.length > 0) {
+			if (node.childNodes[0].nodeName == "#text") {
+				return node.childNodes[0].nodeValue;
+			}
+			if (node.childNodes[0].nodeName == "INPUT") {
+				return $(node.childNodes[0]).val();
+			}
+		}
+		return node.innerHTML;
+	};
+
+	function edit_row(obj) {
+		var $row = $(obj).parent().parent();
+		var id = $row.attr("id").replace(/row_([0-9]*)_.*/, '$1');
+		var table = $row.attr("id").replace(/row_([0-9]*)_(.*)/, '$2');
+		var row = table_data[table][id];
+		// render the row as an inline form
+		var html = draw_form_row(table_form[table], row);
+		$row.replaceWith(html);
+		$(".tablesorter").trigger("update");
+		js_links();
+		return;
+	}
+
+	function cancel_edit_row(obj) {
+		var $row = $(obj).parent().parent();
+		var id = $row.attr("id").replace(/row_([0-9]*)_.*/, '$1');
+		if (id == "0") {
+			$row.remove();
+		} else {
+			var table = $row.attr("id").replace(/row_([0-9]*)_(.*)/, '$2');
+			var row = table_data[table][id];
+			// render the row as a table row
+			var html = draw_row(table_form[table], row);
+			$row.replaceWith(html);
+		}
+		$(".tablesorter").trigger("update");
+		js_links();
+		return;
+	}
+
+	function save_row(obj) {
+		var $row = $(obj).parent().parent();
+		var id = $row.attr("id").replace(/row_([0-9]*)_.*/, '$1');
+		var table = $row.attr("id").replace(/row_([0-9]*)_(.*)/, '$2');
+		var row = table_data[table][id];
+		for (var col in row) {
+			var val = $('#id_row_'+id+'-'+table+'-'+col).val();
+			row[col] = val;
+		}
+		// post the row
+		var post = {table: table};
+		for (i in row) {
+			post[i] = row[i];
+		}
+		var url = "/config/?json&row_submit&debug";
+		$.postJSON(url, post, function(data) {
+			var new_row = data.submitted;
+			if (new_row == null) {
+				$.msgbox("The row was not saved");
+				return;
+			}
+			table_data[table][new_row.id] = new_row;
+			$.msgbox("The row was saved.");
+			row = new_row;
+
+			// render the row as an inline form
+			var html = draw_row(table_form[table], row);
+			$row.replaceWith(html);
+			$(".tablesorter").trigger("update");
+			js_links();
+		});
+		return;
+	}
+
+	function delete_row(obj) {
+		var $row = $(obj).parent().parent();
+		var id = $row.attr("id").replace(/row_([0-9]*)_.*/, '$1');
+		var table = $row.attr("id").replace(/row_([0-9]*)_(.*)/, '$2');
+		var q = "Are you sure you want to delete:\n";
+		var row = table_data[table][id];
+		var form = table_form[table].elements;
+		for (i in form) {
+			if (form[i].type == 'hidden') continue;
+			q += row[form[i].name]+"\n";
+		}
+		if (confirm(q)) {
+			var url = "/config/?json&row_delete&debug";
+			var post = {table: table, id: id};
+			$.postJSON(url, post, function(data) {
+				$.msgbox("The row was deleted");
+				$row.empty();
+				$(".tablesorter").trigger("update");
+			});
+		}
+	}
+
+	function add_row(obj) {
+		// here, obj is not a link in a td in a tr in a table
+		// it is a link outside the table with a parallel id with the table
+		var id = $(obj).parent().attr('id');
+		id = id.substr(0, id.length - 6);
+		var $htable = $('#'+id);
+		var form = table_form[table_name_hash[id]];
+		var item = {};
+		for (var i in form.elements) {
+			item[form.elements[i].name] = '';
+		}
+		item.id = 0;
+		table_data[table_name_hash[id]][0] = item;
+		
+		$htable.children('tbody').eq(0).prepend(draw_form_row(form, item));
+		$(".tablesorter").trigger("update");
+		js_links();
+	}
+
+	function js_links() {
+		/* set the on click for delete links */
+		$(".jslink").filter(".delete").unbind('click').click(function() {
+			delete_row(this);
+		});
+		/* set the on click for edit links */
+		$(".jslink").filter(".edit").unbind('click').click(function() {
+			edit_row(this);
+		});
+		/* set the on click for save links */
+		$(".jslink").filter(".save").unbind('click').click(function() {
+			save_row(this);
+		});
+		/* set the on click for cancel_edit links */
+		$(".jslink").filter(".cancel").unbind('click').click(function() {
+			cancel_edit_row(this);
+		});
+		/* set the on click for cancel_edit links */
+		$(".jslink").filter(".add").unbind('click').click(function() {
+			add_row(this);
+		});
+	}
+	$.activate_add_popups = function() {
+		$(".add-popup").each(function() {
+			var $this = $(this);
+			$this.children('h2').eq(0).css('clear', 'left');
+			$this.prepend("<a class='jslink add'>Add new...</a>");
+		});
+	}
+
+	var table_data = {};
+	var table_form = {};
+	var table_name_hash = {};
+	function draw_row(form, obj) {
+		var ret = '<tr id="row_'+obj.id+'_'+form.name+'" class="edit">\n';
+		for (i in form.elements) {
+			var el = form.elements[i];
+			if (el.type == 'hidden') continue;
+			ret += '<td id="row_'+obj.id+'-'+form.name+'-'+el.name+'">'+obj[el.name]+'</td>\n';
+		}
+		if (form.actions != null) {
+			ret += '<td>';
+			var actions = form.actions.split(' ');
+			for (i in actions) {
+				var a = actions[i]; 
+				ret += '<a id="'+a+'_'+obj.id+'_'+form.name+'" class="jslink '+a+'">'+a+'</a>';
+			}
+			ret += '</td>\n';
+		}
+		ret += '</tr>\n';
+		return ret;
+	}
+	function draw_form_row(form, obj) {
+		var ret = '<tr id="row_'+obj.id+'_'+form.name+'">\n';
+		for (i in form.elements) {
+			var el = form.elements[i];
+			if (el.type == 'hidden') continue;
+			el.id = 'id_row_'+obj.id+'-'+form.name+'-'+el.name;
+			var field = {type: el.type, name: el.name, id: el.id, value: obj[el.name]};
+			ret += '<td id="row_'+obj.id+'-'+form.name+'-'+el.name+'">'+eval('$.render_'+el.type+'(field, 1)')+'</td>\n';
+		}
+		ret += '<td>';
+		var actions = ['save', 'cancel'];
+		for (i in form.elements) {
+			var el = form.elements[i];
+			if (el.type != 'hidden') continue;
+			el.id = 'id_row_'+obj.id+'-'+form.name+'-'+el.name;
+			var field = {type: el.type, name: el.name, id: el.id, value: obj[el.name]};
+			ret += $.render_hidden(field, 1)+'\n';
+		}
+		for (i in actions) {
+			var a = actions[i]; 
+			ret += '<a id="'+a+'_'+obj.id+'_'+form.name+'" class="jslink '+a+'">'+a+'</a>';
+		}
+		ret += '</td>\n</tr>\n';
+		return ret;
+	}
+	function draw_table(name) {
+		var form = table_form[name];
+		var data = table_data[name];
+		var table = '<thead><tr>';
+		for (i in form.elements) {
+			var el = form.elements[i];
+			if (el.type == 'hidden') continue;
+			table += '<th>'+el.label+'</th>';
+		}
+		table += '<th>Actions</th></tr></thead>';
+
+		$.each(data, function(i, item) {
+			table += draw_row(form, item);
+		});
+		if (form.id == null) {
+			form.id = form.name;
+		}
+		$("#"+form.id).html(table);
+		js_links();
+	}
+
+	$.json_forms_and_tables = function(forms, tables) {
+		if (forms == null) {
+			forms = [];
+		}
+		if (tables == null) {
+			tables = [];
+		}
+		var url = "/config/?json&debug";
+		var query = {};
+		for (i in tables)
+			query[tables[i]] = "records";
+		for (i in forms)
+			query[forms[i]] = "form";
+		
+		$.postJSON(url, query, function(data) {
+				for (i in forms) {
+					var rform = $.render_form(data[forms[i]].form, data[forms[i]].values);
+					$('#'+data[forms[i]].form.id+'-wrapper').html(rform);
+					var form_options = {
+						url: "/config/?json&form_submit="+forms[i]+"&debug",
+						type: "POST",
+						dataType: "json",
+						success: function() {
+							$.msgbox("The settings were saved.");
+						},
+					};
+					$('#'+data[forms[i]].form.id+'-wrapper').submit(function() {
+						$(this).ajaxSubmit(form_options);
+						return false;
+					});
+				}
+				for (i in tables) {
+					table_data[tables[i]] = data[tables[i]].records;
+					table_form[tables[i]] = data[tables[i]].form;
+					table_name_hash[data[tables[i]].form.id] = tables[i];
+					draw_table(tables[i]);
+				}
+				$(".tablesorter").tablesorter({textExtraction: form_or_td_extraction});
+		});
+	}
+
 
 }); })(jQuery);
 

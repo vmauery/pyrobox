@@ -15,16 +15,18 @@ class model {
 		typedef boost::shared_ptr<model> ptr;
 
 	public:
-		model();
-		model(long int i);
-		model(const db::Result& vals);
 		virtual ~model() {}
 		long int id();
 		virtual std::string json() = 0;
 		static std::list<ptr> fetch_all(const std::string& type);
+		static model::ptr factory(const std::string& type, const db::Result& vals);
 		bool save();
+		bool delete_row();
 
 	protected:
+		model();
+		model(long int i);
+		model(const db::Result& vals);
 		virtual const char *table_name() const { return _nothing_; }
 		virtual void _set(const std::string& name, const std::string& value) {
 			_values[name] = value;
@@ -50,13 +52,14 @@ class model {
 /////////////////////////////////////////////////////////////////////////
 class static_dhcp : public model {
 	public:
-		static_dhcp() : model() {}
-		static_dhcp(long int i) : model(i) {}
-		static_dhcp(db::Result& vals) : model(vals) {}
 		virtual ~static_dhcp() {}
 		static std::list<model::ptr> all();
+		static static_dhcp::ptr create(const db::Result& vals);
 
 	protected:
+		static_dhcp() : model() {}
+		static_dhcp(long int i) : model(i) {}
+		static_dhcp(const db::Result& vals) : model(vals) {}
 		virtual const char *table_name() const { return _table_name; }
 		virtual const std::vector<std::string>& names() const;
 
@@ -75,21 +78,53 @@ class static_dhcp : public model {
 };
 
 //////////////////////////////////////////////////////////////////////////
+// class deny_dhcp
+/////////////////////////////////////////////////////////////////////////
+class deny_dhcp : public model {
+	public:
+		typedef boost::shared_ptr<deny_dhcp> ptr;
+
+	public:
+		virtual ~deny_dhcp() {}
+		static std::list<model::ptr> all();
+		static deny_dhcp::ptr create(const db::Result& vals);
+
+	protected:
+		deny_dhcp() : model() {}
+		deny_dhcp(long int i) : model(i) {}
+		deny_dhcp(const db::Result& vals) : model(vals) {}
+		virtual const char *table_name() const { return _table_name; }
+		virtual const std::vector<std::string>& names() const;
+
+	private:
+		static const char _table_name[];
+	
+	// variable access interface
+	public:
+		virtual std::string json();
+		std::string& hostname() { return _get("hostname"); }
+		void hostname(const std::string& value) { _set("hostname", value); }
+		std::string& mac_addr() { return _get("mac_addr"); }
+		void mac_addr(const std::string& value) { _set("mac_addr", value); }
+};
+
+//////////////////////////////////////////////////////////////////////////
 // class variable
 /////////////////////////////////////////////////////////////////////////
 class variable : public model {
 	public:
-		variable(const std::string& vg) : model() { vgroup(vg); }
-		variable(const std::string& vg, const std::string& n);
-		variable(db::Result& vals) : model(vals) {}
 		virtual ~variable() {}
 		static std::list<model::ptr> all(const std::string& form_name);
 
 		static std::string get(const std::string& vg, const std::string& n);
 		static void set(const std::string& vg, const std::string &n, const std::string &v);
+		static void del(const std::string& vg, const std::string &n);
 
 	protected:
 		variable() : model() {}
+		variable(const std::string& vg) : model() { vgroup(vg); }
+		variable(const std::string& vg, const std::string& n);
+		variable(db::Result& vals) : model(vals) {}
 		virtual const char *table_name() const { return _table_name; }
 		virtual const std::vector<std::string>& names() const;
 

@@ -1,5 +1,6 @@
 form:
 	name: dhcp_settings
+	id: dhcp-settings-form
 	class: form ajax json
 	action: gobabygogo.cgi
 	method: post
@@ -63,4 +64,4 @@ form:
 			value: Save
 		end: submit
 	end: elements
-end: dhcp_settings
+end: form

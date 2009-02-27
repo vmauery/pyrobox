@@ -36,6 +36,7 @@ class form_base {
 			t_checkboxes,
 			t_hidden,
 			t_file,
+			t_model,
 			element_count
 		} form_element_type;
 		class invalid_type {
@@ -331,7 +332,7 @@ class form : public form_set {
 
 		virtual ~form() {}
 
-		std::string submit(const strmap& post) const;
+		virtual std::string submit(const strmap& post) const;
 		std::string render_values() const;
 
 		// normally a realm is the form's name, but in some cases
@@ -341,9 +342,27 @@ class form : public form_set {
 
 	protected:
 		form(const strmap& attrs) : form_set(t_form, attrs) {}
+		form(form_element_type type, const strmap& attrs) : form_set(type, attrs) {}
 
 		strmap validate(const strmap& values) const;
 
+};
+
+class model_form : public form {
+	public:
+		typedef boost::shared_ptr<model_form> ptr;
+		typedef boost::weak_ptr<model_form> wptr;
+
+	public:
+		static ptr create(const strmap& attrs=strmap());
+
+		virtual std::string submit(const strmap& post) const;
+
+		virtual ~model_form() {}
+	
+	protected:
+		model_form(const strmap& values) : form(t_model, values) {}
+		
 };
 
 #endif
