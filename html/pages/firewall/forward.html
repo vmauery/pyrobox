@@ -12,8 +12,19 @@ table.port-forward {
 
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/jquery.combobox.js"></script>
+<script type="text/javascript" src="/js/jquery.tablesorter.js"></script>
+<script type="text/javascript" src="/js/jquery.form.js"></script>
 <script type="text/javascript" src="/js/pyrobox.js"></script>
 
+<script type="text/javascript">
+
+(function($) {$(function() {
+
+$.json_forms_and_tables([], ['firewall_forward']);
+$.activate_add_popups();
+
+}); })(jQuery);
+</script>
 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <link rel="shortcut icon" href="/theme/flames/images/favicon.ico" type="image/x-icon" />
@@ -62,8 +73,6 @@ table.port-forward {
 		<div id="blocks-pre"></div>
 
 
-
-
 <!--
 	Here we need to render a two-level ul tree
 	that represents the tabs for this section
@@ -72,16 +81,11 @@ table.port-forward {
 
 <div id="content">
 
-
-
-
-
-
-<form id="port-forward-form">
-</form>
-
-
-
+<div id="port-forward-form-popup" class="add-popup">
+<h2>Port Forwarding</h2>
+<table class="tablesorter" id="port-forward-form">
+</table>
+</div>
 
 
 </div>

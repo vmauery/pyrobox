@@ -294,9 +294,14 @@ function is_object(obj) {
 		return ret;
 	}
 
-	$.render_select = function(el) {
+	$.render_select = function(el, input_only) {
 		var attributes = [];
 		element_common(el, attributes);
+		if (input_only) {
+			return '<select name="'+el.name+'" id="'+el.id+'">\n'+
+			render_select_options(el) +
+			'</select><span class="error"></span>\n</div>';
+		}
 		return '<div class="field-item">\n'+
 			'<div class="label"><label for="'+el.id+'">'+el.label+'</label><div class="description">'+el.description+'</div></div>\n'+
 			'<select name="'+el.name+'" id="'+el.id+'">\n'+
@@ -527,7 +532,15 @@ function is_object(obj) {
 			if (el.type == 'hidden') continue;
 			el.id = 'id_row_'+obj.id+'-'+form.name+'-'+el.name;
 			var field = {type: el.type, name: el.name, id: el.id, value: obj[el.name]};
-			ret += '<td id="row_'+obj.id+'-'+form.name+'-'+el.name+'">'+eval('$.render_'+el.type+'(field, 1)')+'</td>\n';
+			if (el.options != null) {
+				field.options = el.options;
+			}
+			ret += '<td id="row_'+obj.id+'-'+form.name+'-'+el.name+'">';
+			if (typeof el.type == 'string' &&
+					eval('typeof $.render_' + el.type) == 'function') {
+				ret += eval('$.render_' + el.type + '(field, 1)');
+			}
+			ret += '</td>\n';
 		}
 		ret += '<td>';
 		var actions = ['save', 'cancel'];

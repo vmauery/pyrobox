@@ -51,6 +51,9 @@ list<model::ptr> model::fetch_all(const string& type) {
 	if (type == "deny_dhcp") {
 		return deny_dhcp::all();
 	}
+	if (type == "firewall_forward") {
+		return firewall_forward::all();
+	}
 	return list<model::ptr>();
 }
 
@@ -61,6 +64,9 @@ model::ptr model::factory(const string& type, const db::Result& vals) {
 	}
 	if (type == "deny_dhcp") {
 		return deny_dhcp::create(vals);
+	}
+	if (type == "firewall_forward") {
+		return firewall_forward::create(vals);
 	}
 	return model::ptr();
 }
@@ -208,6 +214,41 @@ string deny_dhcp::json() {
 	   << "\"id\": " << id() << ", "
 	   << "\"mac_addr\": \"" << mac_addr() << "\", "
 	   << "\"hostname\": \"" << hostname() << "\", "
+	   << " }";
+	return ss.str();
+}
+
+
+//////////////////////////////////////////////////////////////////////////
+// class firewall_forward
+/////////////////////////////////////////////////////////////////////////
+const char firewall_forward::_table_name[] = "app_portforward";
+
+const vector<string>& firewall_forward::names() const {
+	static vector<string> _names;
+	if (_names.size() == 0) {
+		_names.push_back("id");
+		_names.push_back("protocol");
+		_names.push_back("src_port");
+		_names.push_back("port_range");
+		_names.push_back("dst_addr");
+		_names.push_back("dst_port");
+	}
+	return _names;
+}
+
+model_all(firewall_forward)
+model_create(firewall_forward)
+
+string firewall_forward::json() {
+	stringstream ss;
+	ss << "{ "
+	   << "\"id\": " << id() << ", "
+	   << "\"protocol\": \"" << protocol() << "\", "
+	   << "\"src_port\": \"" << src_port() << "\", "
+	   << "\"port_range\": \"" << port_range() << "\", "
+	   << "\"dst_addr\": \"" << dst_addr() << "\", "
+	   << "\"dst_port\": \"" << dst_port() << "\", "
 	   << " }";
 	return ss.str();
 }

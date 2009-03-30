@@ -7,11 +7,11 @@ using namespace std;
 static int parse_rows(void *arg, int col_count, char **columns, char **col_names) {
 	db::Results *results = (db::Results *)arg;
 	db::Result row;
+	char * null="";
 	for (int i=0; i<col_count; i++) {
-//		cout << col_names[i] << " => " << columns[i] << ", ";
-		row[col_names[i]] = columns[i];
+		// info(col_names[i] << " => " << (columns[i]?columns[i]:null) << ", ");
+		row[col_names[i]] = (columns[i]?columns[i]:null);
 	}
-//	cout << endl;
 	results->push_back(row);
 	return 0;
 }
