@@ -14,25 +14,7 @@
 <script type="text/javascript">
 (function($) {$(function() {
 
-var url = "/config/?json&debug";
-$.postJSON(url, {network_wireless: "form"}, function(data) {
-		var rform = $.render_form(data.network_wireless.form, data.network_wireless.values);
-		$('#network-wireless-form').html(rform);
-
-});
-
-var network_wireless_form_options = {
-	url: "/config/?json&form_submit=network_wireless&debug",
-	type: "POST",
-	dataType: "json",
-	success: function() {
-		$.msgbox("The settings were saved.");
-	},
-};
-$('#network-wireless-form').submit(function() {
-	$(this).ajaxSubmit(network_wireless_form_options);
-	return false;
-});
+$.json_forms_and_tables(['network_wireless'], []);
 
 }); })(jQuery);
 </script>
@@ -98,7 +80,7 @@ $('#network-wireless-form').submit(function() {
 
 
 <h1>Wireless</h1>
-<div id="network-wireless-form">
+<div id="network-wireless-form-wrapper">
 </div>
 
 

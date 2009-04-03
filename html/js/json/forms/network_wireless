@@ -1,5 +1,6 @@
 form:
 	name: network_wireless
+	id: network-wireless-form
 	action: none
 	class: ajax json
 	elements:

@@ -14,25 +14,7 @@
 <script type="text/javascript">
 (function($) {$(function() {
 
-var url = "/config/?json&debug";
-$.postJSON(url, {network_lan: "form"}, function(data) {
-		var rform = $.render_form(data.network_lan.form, data.network_lan.values);
-		$('#network-lan-form').html(rform);
-
-});
-
-var network_lan_form_options = {
-	url: "/config/?json&form_submit=network_lan&debug",
-	type: "POST",
-	dataType: "json",
-	success: function() {
-		$.msgbox("The settings were saved.");
-	},
-};
-$('#network-lan-form').submit(function() {
-	$(this).ajaxSubmit(network_lan_form_options);
-	return false;
-});
+$.json_forms_and_tables(['network_lan'],[]);
 
 }); })(jQuery);
 </script>
@@ -101,7 +83,7 @@ $('#network-lan-form').submit(function() {
 <h1>LAN</h1>
 
 
-<div id="network-lan-form">
+<div id="network-lan-form-wrapper">
 </div>
 
 

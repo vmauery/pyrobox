@@ -1,5 +1,6 @@
 form:
 	name: dns_settings
+	id: dns-settings-form
 	action: none
 	class: ajax json
 	elements:

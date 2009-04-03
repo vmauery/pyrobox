@@ -14,25 +14,7 @@
 <script type="text/javascript">
 (function($) {$(function() {
 
-var url = "/config/?json&debug";
-$.postJSON(url, {main_settings: "form"}, function(data) {
-		var rform = $.render_form(data.main_settings.form, data.main_settings.values);
-		$('#main-settings-form').html(rform);
-
-});
-
-var main_settings_form_options = {
-	url: "/config/?json&form_submit=main_settings&debug",
-	type: "POST",
-	dataType: "json",
-	success: function() {
-		$.msgbox("The settings were saved.");
-	},
-};
-$('#main-settings-form').submit(function() {
-	$(this).ajaxSubmit(main_settings_form_options);
-	return false;
-});
+$.json_forms_and_tables(['main_settings'], []);
 
 }); })(jQuery);
 </script>
@@ -99,7 +81,7 @@ $('#main-settings-form').submit(function() {
 
 
 <h1>Settings</h1>
-<div id="main-settings-form">
+<div id="main-settings-form-wrapper">
 </div>
 
 

@@ -1,5 +1,6 @@
 form:
 	name: network_lan
+	id: network-lan-form
 	action: none
 	class: ajax json
 	elements:

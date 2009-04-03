@@ -1,5 +1,6 @@
 form:
 	name: firewall_settings
+	id: firewall-settings-form
 	action: none
 	class: ajax json
 	elements:

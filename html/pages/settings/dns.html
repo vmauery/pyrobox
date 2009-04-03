@@ -14,25 +14,7 @@
 <script type="text/javascript">
 (function($) {$(function() {
 
-var url = "/config/?json&debug";
-$.postJSON(url, {dns_settings: "form"}, function(data) {
-		var rform = $.render_form(data.dns_settings.form, data.dns_settings.values);
-		$('#dns-settings-form').html(rform);
-
-});
-
-var dns_settings_form_options = {
-	url: "/config/?json&form_submit=dns_settings&debug",
-	type: "POST",
-	dataType: "json",
-	success: function() {
-		alert("Settings saved");
-	},
-};
-$('#dns-settings-form').submit(function() {
-	$(this).ajaxSubmit(dns_settings_form_options);
-	return false;
-});
+$.json_forms_and_tables(['dns_settings'], []);
 
 }); })(jQuery);
 </script>
@@ -99,7 +81,7 @@ $('#dns-settings-form').submit(function() {
 
 
 <h1>DNS</h1>
-<div id="dns-settings-form">
+<div id="dns-settings-form-wrapper">
 </div>
 
 
